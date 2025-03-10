@@ -33,3 +33,18 @@ Diyetisyenler, kullanıcıların ilerlemesini analiz ederek rapor sunabilir.
 Diyet planları, profesyonel sağlık uzmanları tarafından güncellenebilir.
 
 
+Proje Kategorisi: Sağlık & Beslenme
+
+Grup Adı: 
+
+Proje Ekibi: Tuğba Zengin
+
+Gereksinim Analizi
+Durum Diyagramı
+Durum Senaryoları
+Front-End
+Back-End
+Video Sunum
+
+
+
