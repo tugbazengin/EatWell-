@@ -1,4 +1,5 @@
 * Kullanıcı Yönetimi ve Profil
+
 1. Kullanıcı kaydı ve giriş sistemi
 2. E-posta ve telefon doğrulama
 3. Kullanıcı profili oluşturma (Ad, yaş, cinsiyet, sağlık bilgileri)
@@ -10,6 +11,7 @@
 9. Kullanıcının profilini gizleyebilmesi veya silmesi
 
 * Kullanıcının sağlık geçmişini kaydetmesi
+
 10. Beslenme Planı ve Takibi
 11. Kişiye özel beslenme planı oluşturma
 12. Günlük, haftalık ve aylık beslenme planları sunma
@@ -21,6 +23,7 @@
 18. Kullanıcının yemek tarifleri ekleyebilmesi
 
 * Egzersiz ve Aktivite Takibi
+
 19. Kullanıcının yaptığı egzersizleri kaydedebilmesi
 20. Günlük kalori yakımını hesaplama
 21. Günlük adım sayısı entegrasyonu (Google Fit, Apple Health vb.)
@@ -28,6 +31,7 @@
 23. Kullanıcının uyku takibini yapabilmesi
 
 * Diyetisyen ve Uzman Entegrasyonu
+
 24. Diyetisyen ve uzman profilleri oluşturma
 25. Kullanıcıların diyetisyenlerden bireysel danışmanlık alabilmesi
 26. Online diyetisyen randevu sistemi
