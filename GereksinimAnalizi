@@ -1,46 +1,40 @@
-* Kullanıcı Yönetimi ve Profil
+Gereksinim Listesi
+1.Üye olma
+2.Giriş yapma
+3.Profil düzenleme
+4.Profil görüntüleme
+5.Hedef oluşturma
+6.Fiziksel aktivite belirleme
+7.Besin alerji ve intolerans belirleme
+8.Vücut bilgileri girme
+9.Beslenme alışkanlıkları belirleme
+10.Şifremi unuttum
+11.Dil değiştirme
+12.Hesap silme
+13.Beslenme takibi
+14.Beslenme planı oluşturma(günlük)
+15. Beslenme planı oluşturma(haftalık)
+16. Beslenme planı oluşturma(aylık)
+17.Diyet türleri belirleme
+18.Kalori ihtiyacı hesaplama
+19.Su tüketimi takibi
+20.Yemek fikirleri sunma
+21.Egzersiz girişi
+22.Kalori yakımı hesabı
+23.Adım sayıcı
+24.Egzersiz performansı görüntüleme
+25.Uyku takibi
+26.Diyetisyen profili
+27.Bireysel danışmanlık
+28.Online randevu sistemi
+29.Sohbet ortamı
+30.Geri bildirim yapma
+31.Diyetisten değelendirme
+32.Yemek tarifi
+33.Kişisel tarif defteri ekleme
+34.Motivasyon bildirimi gönderme
+35.Diyet hatırlatıcı bildirim gönderme
+36.Bildirimleri düzenleme
 
-1. Kullanıcı kaydı ve giriş sistemi
-2. E-posta ve telefon doğrulama
-3. Kullanıcı profili oluşturma (Ad, yaş, cinsiyet, sağlık bilgileri)
-4. Kullanıcının hedef belirlemesi (Kilo alma, kilo verme, kas kazanma)
-5. Kullanıcının besin alerjilerini ve intoleranslarını belirtebilmesi
-6. Kullanıcının fiziksel aktivite seviyesini belirleyebilmesi
-7. Kullanıcının günlük beslenme alışkanlıklarını kaydedebilmesi
-8. Kullanıcı profiline vücut ölçüleri (bel, kalça, boyun ölçüsü vb.) ekleme
-9. Kullanıcının profilini gizleyebilmesi veya silmesi
-
-* Kullanıcının sağlık geçmişini kaydetmesi
-
-10. Beslenme Planı ve Takibi
-11. Kişiye özel beslenme planı oluşturma
-12. Günlük, haftalık ve aylık beslenme planları sunma
-13. Farklı diyet türleri (vegan, ketojenik, düşük karbonhidrat vb.) için öneriler
-14. Günlük kalori ihtiyacını otomatik hesaplama
-15. Kullanıcının yediği yemekleri ekleyerek takip etmesi
-16. Su tüketimi takibi ve hatırlatma bildirimleri
-17. Beslenme planında yemek alternatifleri sunma
-18. Kullanıcının yemek tarifleri ekleyebilmesi
-
-* Egzersiz ve Aktivite Takibi
-
-19. Kullanıcının yaptığı egzersizleri kaydedebilmesi
-20. Günlük kalori yakımını hesaplama
-21. Günlük adım sayısı entegrasyonu (Google Fit, Apple Health vb.)
-22. Kullanıcının egzersiz performansını grafiklerle takip edebilmesi
-23. Kullanıcının uyku takibini yapabilmesi
-
-* Diyetisyen ve Uzman Entegrasyonu
-
-24. Diyetisyen ve uzman profilleri oluşturma
-25. Kullanıcıların diyetisyenlerden bireysel danışmanlık alabilmesi
-26. Online diyetisyen randevu sistemi
-27. Diyetisyenlerin kullanıcılarla mesajlaşabilmesi
-28. Kullanıcıların diyetisyen değerlendirmesi yapabilmesi
-
-* Ekstra Özellikler ve Entegrasyonlar
-
-29. Yemek tarifi ekleme ve kişisel tarif defteri oluşturma
-30. Motivasyon bildirimleri ve diyet hatırlatıcıları
-31. Kullanıcıların başarılarını paylaşabileceği topluluk bölümü
+ 
 
