@@ -22,7 +22,7 @@ Grup Adı: SoloDev
 
 Proje Ekibi: Tuğba Zengin
 
-https://github.com/tugbazengin/EatWell-/blob/main/GereksinimAnalizi#:~:text=GereksinimAnalizi
+https://github.com/tugbazengin/EatWell-/blob/main/GereksinimAnalizi
 
 
 
