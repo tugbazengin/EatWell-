@@ -22,6 +22,8 @@ Grup Adı: SoloDev
 
 Proje Ekibi: Tuğba Zengin
 
+Diyagramlar/EatWell kullanım senaryosu diyagramı .pdf
+
 
 
 
