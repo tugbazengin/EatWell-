@@ -24,7 +24,7 @@ Proje Ekibi: Tuğba Zengin
 
 1.[**Gereksinim Analizi**](https://github.com/tugbazengin/EatWell-/blob/main/GereksinimAnalizi)
 
-2.[**Durum Diyagramı**](https://github.com/tugbazengin/EatWell-/blob/main/Diyagramlar/EatWell%20kullanım%20senaryosu%20diyagramı%20.pdf)
+2.[**Durum Diyagramı**](https://github.com/tugbazengin/EatWell-/blob/main/durum-diyagramı/Durum%20diyagramı.pdf)
 
 3.[**Durum Senaryoları**](https://github.com/tugbazengin/EatWell-/blob/main/Durum%20Senaryoları/senaryolar.pdf)
 
