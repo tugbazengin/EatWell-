@@ -29,9 +29,128 @@
 		61523B462D959DD700887FEF /* EatWellUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EatWellUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		6147855B2DE3D64500F0FE3A /* Exceptions for "EatWell" folder in "EatWell" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+				ContentView.swift,
+				EatWellApp.swift,
+				"ImagePicker.swift .swift",
+				Models/Appointment.swift,
+				Models/Dietitian.swift,
+				Models/Meal.swift,
+				Models/NewAppointment.swift,
+				Models/RecipeMeal.swift,
+				Models/ResetPasswordData.swift,
+				Models/UserCredentials.swift,
+				Models/UserProfile.swift,
+				"Preview Content/Preview Assets.xcassets",
+				Style.swift,
+				ViewModels/AppointmentListViewModel.swift,
+				ViewModels/AppointmentViewModel.swift,
+				ViewModels/AuthViewModel.swift,
+				ViewModels/DashboardViewModel.swift,
+				ViewModels/MealPlanViewModel.swift,
+				ViewModels/MealRecipesViewModel.swift,
+				ViewModels/ProfileSetupViewModel.swift,
+				ViewModels/ProfileViewModel.swift,
+				ViewModels/ResetPasswordViewModel.swift,
+				ViewModels/SplashViewModel.swift,
+				views/AppointmentList/AppointmentCard.swift,
+				views/AppointmentList/AppointmentListView.swift,
+				views/AppointmentView/AppointmentView.swift,
+				views/AppointmentView/DietitianCard.swift,
+				views/AuthView.swift,
+				views/BaseView.swift,
+				views/Components/CustomButton.swift,
+				views/Components/CustomSecureField.swift,
+				views/Components/CustomTextField.swift,
+				views/Components/InfoBox.swift,
+				"views/Dashboard/ AccessCard.swift",
+				views/Dashboard/DashboardView.swift,
+				views/Dashboard/InfoCard.swift,
+				views/Dashboard/MotivationCard.swift,
+				views/MealPlan/MealCard.swift,
+				views/MealPlan/MealPlanView.swift,
+				views/MealPlan/MealSection.swift,
+				views/MealPlan/NutritionInfo.swift,
+				views/MealRecipes/MealRecipesView.swift,
+				views/MealRecipes/RecipeCard.swift,
+				views/Profile/ProfileInfoCard.swift,
+				views/Profile/ProfileRow.swift,
+				views/Profile/ProfileView.swift,
+				views/ProfileSetupView.swift,
+				views/ResetPasswordView.swift,
+				views/SplashView.swift,
+			);
+			target = 61523B2B2D959DD400887FEF /* EatWell */;
+		};
+		6147855C2DE3D64500F0FE3A /* Exceptions for "EatWell" folder in "EatWellTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+				ContentView.swift,
+				EatWellApp.swift,
+				"ImagePicker.swift .swift",
+				Models/Appointment.swift,
+				Models/Dietitian.swift,
+				Models/Meal.swift,
+				Models/NewAppointment.swift,
+				Models/RecipeMeal.swift,
+				Models/ResetPasswordData.swift,
+				Models/UserCredentials.swift,
+				Models/UserProfile.swift,
+				"Preview Content/Preview Assets.xcassets",
+				Style.swift,
+				ViewModels/AppointmentListViewModel.swift,
+				ViewModels/AppointmentViewModel.swift,
+				ViewModels/AuthViewModel.swift,
+				ViewModels/DashboardViewModel.swift,
+				ViewModels/MealPlanViewModel.swift,
+				ViewModels/MealRecipesViewModel.swift,
+				ViewModels/ProfileSetupViewModel.swift,
+				ViewModels/ProfileViewModel.swift,
+				ViewModels/ResetPasswordViewModel.swift,
+				ViewModels/SplashViewModel.swift,
+				views/AppointmentList/AppointmentCard.swift,
+				views/AppointmentList/AppointmentListView.swift,
+				views/AppointmentView/AppointmentView.swift,
+				views/AppointmentView/DietitianCard.swift,
+				views/AuthView.swift,
+				views/BaseView.swift,
+				views/Components/CustomButton.swift,
+				views/Components/CustomSecureField.swift,
+				views/Components/CustomTextField.swift,
+				views/Components/InfoBox.swift,
+				"views/Dashboard/ AccessCard.swift",
+				views/Dashboard/DashboardView.swift,
+				views/Dashboard/InfoCard.swift,
+				views/Dashboard/MotivationCard.swift,
+				views/MealPlan/MealCard.swift,
+				views/MealPlan/MealPlanView.swift,
+				views/MealPlan/MealSection.swift,
+				views/MealPlan/NutritionInfo.swift,
+				views/MealRecipes/MealRecipesView.swift,
+				views/MealRecipes/RecipeCard.swift,
+				views/Profile/ProfileInfoCard.swift,
+				views/Profile/ProfileRow.swift,
+				views/Profile/ProfileView.swift,
+				views/ProfileSetupView.swift,
+				views/ResetPasswordView.swift,
+				views/SplashView.swift,
+			);
+			target = 61523B3B2D959DD700887FEF /* EatWellTests */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		61523B2E2D959DD400887FEF /* EatWell */ = {
+		614785582DE3D60A00F0FE3A /* EatWell */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				6147855B2DE3D64500F0FE3A /* Exceptions for "EatWell" folder in "EatWell" target */,
+				6147855C2DE3D64500F0FE3A /* Exceptions for "EatWell" folder in "EatWellTests" target */,
+			);
 			path = EatWell;
 			sourceTree = "<group>";
 		};
@@ -75,7 +194,7 @@
 		61523B232D959DD400887FEF = {
 			isa = PBXGroup;
 			children = (
-				61523B2E2D959DD400887FEF /* EatWell */,
+				614785582DE3D60A00F0FE3A /* EatWell */,
 				61523B3F2D959DD700887FEF /* EatWellTests */,
 				61523B492D959DD700887FEF /* EatWellUITests */,
 				61523B2D2D959DD400887FEF /* Products */,
@@ -107,9 +226,6 @@
 			);
 			dependencies = (
 			);
-			fileSystemSynchronizedGroups = (
-				61523B2E2D959DD400887FEF /* EatWell */,
-			);
 			name = EatWell;
 			packageProductDependencies = (
 			);
@@ -131,6 +247,7 @@
 				61523B3E2D959DD700887FEF /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				614785582DE3D60A00F0FE3A /* EatWell */,
 				61523B3F2D959DD700887FEF /* EatWellTests */,
 			);
 			name = EatWellTests;
