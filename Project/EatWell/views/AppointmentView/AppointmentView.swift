@@ -91,6 +91,12 @@ struct AppointmentView: View {
                 .padding(.bottom, 20)
             }
         }
+        .onChange(of: viewModel.appointment.selectedDietitian) { _ in
+            viewModel.fetchAvailableTimes()
+        }
+        .onChange(of: viewModel.appointment.selectedDate) { _ in
+            viewModel.fetchAvailableTimes()
+        }
     }
 }
 

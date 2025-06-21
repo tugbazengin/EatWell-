@@ -3,7 +3,6 @@
 //  EatWell
 //
 //  Created by Tuğba Zengin on 23.05.2025.
-//
 import SwiftUI
 
 struct ProfileSetupView: View {
@@ -71,8 +70,8 @@ struct ProfileSetupView: View {
                     }
                     .appButtonStyle(color: .orange)
 
-                    if !viewModel.user.bmi.isEmpty {
-                        InfoBox(text: "BMI: \(viewModel.user.bmi)", color: .orange)
+                    if let bmi = viewModel.user.bmi, !bmi.isEmpty {
+                        InfoBox(text: "BMI: \(bmi)", color: .orange)
                     }
 
                     Button(action: viewModel.calculateDailyCalories) {
@@ -81,8 +80,8 @@ struct ProfileSetupView: View {
                     }
                     .appButtonStyle(color: .green)
 
-                    if !viewModel.user.dailyCalories.isEmpty {
-                        InfoBox(text: "\(viewModel.user.dailyCalories) kcal", color: .green)
+                    if let calories = viewModel.user.dailyCalories, !calories.isEmpty {
+                        InfoBox(text: "\(calories) kcal", color: .green)
                     }
 
                     Button(action: viewModel.calculateDailyWaterIntake) {
@@ -91,8 +90,8 @@ struct ProfileSetupView: View {
                     }
                     .appButtonStyle(color: .blue)
 
-                    if !viewModel.user.dailyWaterIntake.isEmpty {
-                        InfoBox(text: "\(viewModel.user.dailyWaterIntake) L", color: .blue)
+                    if let water = viewModel.user.dailyWaterIntake, !water.isEmpty {
+                        InfoBox(text: "\(water) L", color: .blue)
                     }
 
                     Button(action: viewModel.saveProfile) {
@@ -109,4 +108,3 @@ struct ProfileSetupView: View {
         }
     }
 }
-

@@ -10,7 +10,7 @@ struct AppointmentListView: View {
     @StateObject private var viewModel = AppointmentListViewModel()
 
     var body: some View {
-        BaseView(title: "Randevularım") {
+        BaseView(title: "Randevularım", showsScrollView: true) {
             if viewModel.appointments.isEmpty {
                 Text("Henüz randevunuz bulunmamaktadır.")
                     .font(.appHeadline)
@@ -24,8 +24,21 @@ struct AppointmentListView: View {
                     }
                 }
             }
+            
+            if let errorMessage = viewModel.errorMessage {
+                Text(errorMessage)
+                    .foregroundColor(.red)
+                    .font(.appBody)
+            }
+        }
+        .onAppear {
+            viewModel.fetchAppointments()
         }
     }
+}
+
+#Preview {
+    AppointmentListView()
 }
 
 

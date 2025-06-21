@@ -7,7 +7,13 @@
 import Foundation
 
 struct NewAppointment {
-    var selectedDate: Date = Date()
-    var selectedTime: String? = nil
-    var selectedDietitian: Dietitian? = nil
+    var selectedDate: Date
+    var selectedTime: String?
+    var selectedDietitian: Dietitian?
+
+    init(selectedDate: Date = Date(), selectedTime: String? = nil, selectedDietitian: Dietitian? = nil) {
+        self.selectedDate = selectedDate
+        self.selectedTime = selectedTime
+        self.selectedDietitian = selectedDietitian
+    }
 }
