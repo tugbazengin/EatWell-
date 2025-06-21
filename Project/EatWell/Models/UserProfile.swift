@@ -4,9 +4,7 @@
 //
 //  Created by Tuğba Zengin on 23.05.2025.
 //
-import Foundation
-
-struct UserProfile: Codable {
+struct UserProfile {
     var fullName: String
     var age: Int
     var height: Double
