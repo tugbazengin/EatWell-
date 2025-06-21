@@ -6,16 +6,18 @@
 //
 import Foundation
 
-struct Dietitian: Identifiable, Equatable {
-    let id: UUID
+struct Dietitian: Identifiable, Equatable, Codable {
+    let id: Int
     let name: String
-    let specialization: String
+    let specialty: String
+    let experience: String
     let image: String
 
-    init(id: UUID = UUID(), name: String, specialization: String, image: String) {
+    init(id: Int, name: String, specialty: String, experience: String, image: String) {
         self.id = id
         self.name = name
-        self.specialization = specialization
+        self.specialty = specialty
+        self.experience = experience
         self.image = image
     }
 }

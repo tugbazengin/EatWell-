@@ -7,6 +7,63 @@ import SwiftUI
 
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
+    
+    // Numeric alanları String olarak bind etmek için computed property'ler
+    private var ageBinding: Binding<String> {
+        Binding(
+            get: { String(viewModel.profile.age) },
+            set: { newValue in
+                if let intValue = Int(newValue) {
+                    viewModel.profile.age = intValue
+                    if viewModel.isEditing {
+                        viewModel.calculateHealthMetrics()
+                    }
+                }
+            }
+        )
+    }
+    
+    private var heightBinding: Binding<String> {
+        Binding(
+            get: { String(viewModel.profile.height) },
+            set: { newValue in
+                if let doubleValue = Double(newValue) {
+                    viewModel.profile.height = doubleValue
+                    if viewModel.isEditing {
+                        viewModel.calculateHealthMetrics()
+                    }
+                }
+            }
+        )
+    }
+    
+    private var weightBinding: Binding<String> {
+        Binding(
+            get: { String(viewModel.profile.weight) },
+            set: { newValue in
+                if let doubleValue = Double(newValue) {
+                    viewModel.profile.weight = doubleValue
+                    if viewModel.isEditing {
+                        viewModel.calculateHealthMetrics()
+                    }
+                }
+            }
+        )
+    }
+    
+    private var targetWeightBinding: Binding<String> {
+        Binding(
+            get: { String(viewModel.profile.targetWeight) },
+            set: { newValue in
+                if let doubleValue = Double(newValue) {
+                    viewModel.profile.targetWeight = doubleValue
+                    if viewModel.isEditing {
+                        viewModel.calculateHealthMetrics()
+                    }
+                }
+            }
+        )
+    }
 
     var body: some View {
         NavigationStack {
@@ -21,11 +78,11 @@ struct ProfileView: View {
 
                         VStack(alignment: .leading, spacing: 15) {
                             ProfileRow(label: "Ad Soyad", value: $viewModel.profile.fullName, isEditing: viewModel.isEditing)
-                            ProfileRow(label: "Yaş", value: $viewModel.profile.age, isEditing: viewModel.isEditing, keyboardType: .numberPad)
-                            ProfileRow(label: "Boy (cm)", value: $viewModel.profile.height, isEditing: viewModel.isEditing, keyboardType: .decimalPad)
-                            ProfileRow(label: "Kilo (kg)", value: $viewModel.profile.weight, isEditing: viewModel.isEditing, keyboardType: .decimalPad)
+                            ProfileRow(label: "Yaş", value: ageBinding, isEditing: viewModel.isEditing, keyboardType: .numberPad)
+                            ProfileRow(label: "Boy (cm)", value: heightBinding, isEditing: viewModel.isEditing, keyboardType: .decimalPad)
+                            ProfileRow(label: "Kilo (kg)", value: weightBinding, isEditing: viewModel.isEditing, keyboardType: .decimalPad)
                             ProfileRow(label: "Telefon", value: $viewModel.profile.phoneNumber, isEditing: viewModel.isEditing, keyboardType: .phonePad)
-                            ProfileRow(label: "Hedef Kilo", value: $viewModel.profile.targetWeight, isEditing: viewModel.isEditing, keyboardType: .decimalPad)
+                            ProfileRow(label: "Hedef Kilo", value: targetWeightBinding, isEditing: viewModel.isEditing, keyboardType: .decimalPad)
                         }
                         .padding()
                         .background(
@@ -35,34 +92,77 @@ struct ProfileView: View {
                         )
                         .padding(.horizontal)
 
-                        // Eğer dailyWater Double ise, direkt formatlayabiliriz
-                        let dailyWaterString = String(format: "%.2f", viewModel.profile.dailyWater)
-
                         VStack(spacing: 15) {
                             ProfileInfoCard(title: "Vücut Kitle Endeksi", value: viewModel.profile.bmi ?? "-", icon: "chart.bar.fill", color: .purple)
                             ProfileInfoCard(title: "Günlük Kalori İhtiyacı", value: "\(viewModel.profile.dailyCalories ?? "0") kcal", icon: "flame.fill", color: .red)
-                            ProfileInfoCard(title: "Günlük Su Tüketimi", value: "\(dailyWaterString) L", icon: "drop.fill", color: .blue)
+                            ProfileInfoCard(title: "Günlük Su Tüketimi", value: "\(viewModel.profile.dailyWaterIntake ?? "0.00") L", icon: "drop.fill", color: .blue)
                         }
                         .padding(.horizontal)
 
                         Spacer(minLength: 40)
                     }
                 }
+                .onAppear {
+                    viewModel.fetchProfile()
+                }
                 .overlay(
                     VStack {
                         Spacer()
                         HStack {
                             Spacer()
-                            Button(action: { viewModel.isEditing.toggle() }) {
-                                Image(systemName: viewModel.isEditing ? "checkmark.circle.fill" : "pencil.circle.fill")
-                                    .resizable()
-                                    .frame(width: 36, height: 36)
-                                    .foregroundColor(viewModel.isEditing ? .green : .black)
-                                    .shadow(radius: 4)
+                            Button(action: { 
+                                if viewModel.isEditing {
+                                    // Düzenleme modundan çıkılırken profili kaydet
+                                    viewModel.updateProfile()
+                                }
+                                viewModel.isEditing.toggle() 
+                            }) {
+                                ZStack {
+                                    if viewModel.isLoading {
+                                        ProgressView()
+                                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                            .frame(width: 36, height: 36)
+                                    } else {
+                                        Image(systemName: viewModel.isEditing ? "checkmark.circle.fill" : "pencil.circle.fill")
+                                            .resizable()
+                                            .frame(width: 36, height: 36)
+                                            .foregroundColor(viewModel.isEditing ? .green : .black)
+                                    }
+                                }
+                                .background(
+                                    Circle()
+                                        .fill(viewModel.isLoading ? Color.blue : Color.clear)
+                                        .frame(width: 44, height: 44)
+                                )
+                                .shadow(radius: 4)
                             }
+                            .disabled(viewModel.isLoading)
                         }
                         .padding()
                     }
+                )
+                .overlay(
+                    // Success Toast
+                    VStack {
+                        if viewModel.showSuccessMessage {
+                            HStack {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.green)
+                                Text("Profil başarıyla güncellendi!")
+                                    .font(.appBody)
+                                    .foregroundColor(.white)
+                            }
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.black.opacity(0.8))
+                            )
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                            .animation(.spring(), value: viewModel.showSuccessMessage)
+                        }
+                        Spacer()
+                    }
+                    .padding(.top, 60)
                 )
                 .alert(isPresented: $viewModel.showDeleteConfirmation) {
                     Alert(

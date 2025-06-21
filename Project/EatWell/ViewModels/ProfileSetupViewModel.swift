@@ -51,7 +51,7 @@ class ProfileSetupViewModel: ObservableObject {
     func saveProfile() {
         print("🔥 Profile save started")
         
-        guard let token = UserDefaults.standard.string(forKey: "jwtToken") else {
+        guard let token = UserDefaults.standard.string(forKey: "user_token") else {
             print("❌ No JWT token found")
             return
         }

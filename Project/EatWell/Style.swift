@@ -9,6 +9,9 @@ import SwiftUI
 
 extension Color {
     static let appBackground = Color(red: 0.95, green: 1.0, blue: 0.95)
+    static let appPrimary = Color.green
+    static let appSecondary = Color.blue
+    static let appAccent = Color.orange
 }
 
 // ViewModifier ,Background
@@ -65,6 +68,8 @@ extension View {
 // Font Stili
 extension Font {
     static let appTitle = Font.system(size: 28, weight: .bold)
+    static let appTitle3 = Font.system(size: 20, weight: .semibold)
     static let appHeadline = Font.system(size: 18, weight: .semibold)
     static let appBody = Font.system(size: 16, weight: .regular)
+    static let appCaption = Font.system(size: 14, weight: .regular)
 }

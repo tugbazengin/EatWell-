@@ -12,19 +12,43 @@ struct AppointmentView: View {
     var body: some View {
         BaseView(title: "Randevu Al", showsScrollView: false) {
             VStack(spacing: 20) {
+                // Error ve Success mesajları
+                if let errorMessage = viewModel.errorMessage {
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                        .padding()
+                        .background(Color.red.opacity(0.1))
+                        .cornerRadius(8)
+                        .padding(.horizontal)
+                }
+                
+                if let successMessage = viewModel.successMessage {
+                    Text(successMessage)
+                        .foregroundColor(.green)
+                        .padding()
+                        .background(Color.green.opacity(0.1))
+                        .cornerRadius(8)
+                        .padding(.horizontal)
+                }
                 // Diyetisyen kartlarıyatay scroll
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 15) {
-                        ForEach(viewModel.dietitians) { dietitian in
-                            DietitianCard(
-                                dietitian: dietitian,
-                                isSelected: viewModel.appointment.selectedDietitian == dietitian
-                            ) {
-                                viewModel.appointment.selectedDietitian = dietitian
+                if viewModel.isLoading && viewModel.dietitians.isEmpty {
+                    ProgressView("Diyetisyenler yükleniyor...")
+                        .frame(height: 120)
+                } else {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 15) {
+                            ForEach(viewModel.dietitians) { dietitian in
+                                DietitianCard(
+                                    dietitian: dietitian,
+                                    isSelected: viewModel.appointment.selectedDietitian == dietitian
+                                ) {
+                                    viewModel.appointment.selectedDietitian = dietitian
+                                    viewModel.fetchAvailableTimes()
+                                }
                             }
                         }
+                        .appContentsPadding()
                     }
-                    .appContentsPadding()
                 }
 
                 // Tarih seçimi
@@ -36,6 +60,11 @@ struct AppointmentView: View {
                         .datePickerStyle(.compact)
                         .padding()
                         .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.9)).shadow(radius: 4))
+                        .onChange(of: viewModel.appointment.selectedDate) {
+                            if viewModel.appointment.selectedDietitian != nil {
+                                viewModel.fetchAvailableTimes()
+                            }
+                        }
                 }
                 .appContentsPadding()
 

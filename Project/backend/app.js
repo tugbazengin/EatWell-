@@ -40,6 +40,12 @@ app.use(cors(corsOptions))
 // Rate limiter middleware - router'dan ÖNCE yerleştiriliyor
 app.use("/api/auth", apiLimiter);  // Sadece auth endpoint'leri için uygula
 
+// Debug logging middleware
+app.use("/api", (req, res, next) => {
+    console.log(`🔍 ${new Date().toISOString()} - ${req.method} ${req.url}`);
+    next();
+});
+
 // API rotaları tanımla
 app.use("/api", router)
 

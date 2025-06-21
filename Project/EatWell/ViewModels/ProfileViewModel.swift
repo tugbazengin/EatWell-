@@ -13,6 +13,8 @@ class ProfileViewModel: ObservableObject {
     @Published var showDeleteConfirmation: Bool
     @Published var navigateToAuth: Bool
     @Published var errorMessage: String?
+    @Published var isLoading: Bool = false
+    @Published var showSuccessMessage: Bool = false
     let baseURL = "http://localhost:5002/api/auth"
 
     init() {
@@ -27,7 +29,7 @@ class ProfileViewModel: ObservableObject {
         guard let url = URL(string: "\(baseURL)/me") else { return }
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
-        if let token = UserDefaults.standard.string(forKey: "jwtToken") {
+        if let token = UserDefaults.standard.string(forKey: "user_token") {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         URLSession.shared.dataTask(with: request) { data, response, error in
@@ -49,16 +51,51 @@ class ProfileViewModel: ObservableObject {
                 let phoneNumber = user["phone"] as? String ?? ""
                 let targetWeight = user["targetWeight"] as? Double ?? 0
                 self.profile = UserProfile(fullName: fullName, age: age, height: height, weight: weight, phoneNumber: phoneNumber, targetWeight: targetWeight, bmi: nil, dailyCalories: nil, dailyWaterIntake: nil, dailyWater: 0)
+                
+                // Profil yüklendikten sonra hesaplamaları yap
+                self.calculateHealthMetrics()
             }
         }.resume()
     }
 
+    func calculateHealthMetrics() {
+        calculateBMI()
+        calculateDailyCalories()
+        calculateDailyWaterIntake()
+    }
+    
+    func calculateBMI() {
+        guard profile.height > 0 else { return }
+        let heightInMeters = profile.height / 100
+        let bmiValue = profile.weight / (heightInMeters * heightInMeters)
+        profile.bmi = String(format: "%.2f", bmiValue)
+    }
+    
+    func calculateDailyCalories() {
+        let bmr = 10 * profile.weight + 6.25 * profile.height - 5 * Double(profile.age) + 5
+        let deficitCalories = (profile.weight - profile.targetWeight) * 7700 / 30
+        let dailyCalorieIntake = max(1200, bmr - deficitCalories)
+        profile.dailyCalories = String(format: "%.0f", dailyCalorieIntake)
+    }
+    
+    func calculateDailyWaterIntake() {
+        let waterIntake = profile.weight * 0.033
+        profile.dailyWaterIntake = String(format: "%.2f", waterIntake)
+    }
+
     func updateProfile() {
-        guard let url = URL(string: "\(baseURL)/update-profile") else { return }
+        print("🔄 Profil güncelleniyor...")
+        isLoading = true
+        errorMessage = nil
+        
+        guard let url = URL(string: "\(baseURL)/update-profile") else { 
+            isLoading = false
+            return 
+        }
         var request = URLRequest(url: url)
         request.httpMethod = "PUT"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        if let token = UserDefaults.standard.string(forKey: "jwtToken") {
+        if let token = UserDefaults.standard.string(forKey: "user_token") {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         let nameParts = profile.fullName.split(separator: " ")
@@ -73,20 +110,81 @@ class ProfileViewModel: ObservableObject {
             "phone": profile.phoneNumber,
             "targetWeight": profile.targetWeight
         ]
+        print("📤 Gönderilen veriler: \(body)")
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
         URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
+                self.isLoading = false
+                
                 if let error = error {
+                    print("❌ Güncelleme hatası: \(error.localizedDescription)")
                     self.errorMessage = error.localizedDescription
                     return
                 }
-                self.fetchProfile()
+                
+                if let httpResponse = response as? HTTPURLResponse {
+                    print("📡 HTTP Durum Kodu: \(httpResponse.statusCode)")
+                    if httpResponse.statusCode == 200 {
+                        print("✅ Profil başarıyla güncellendi!")
+                        
+                        // Başarı mesajını göster
+                        self.showSuccessMessage = true
+                        
+                        // 2 saniye sonra mesajı gizle
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            self.showSuccessMessage = false
+                        }
+                        
+                        // Profil güncellendikten sonra hesaplamaları hemen yap
+                        self.calculateHealthMetrics()
+                    }
+                }
             }
         }.resume()
     }
 
     func deleteProfile() {
-        // Gerçek silme işlemlerini buraya ekleyeceğiz.
-        navigateToAuth = true
+        print("🗑️ Hesap silme işlemi başlatılıyor...")
+        guard let url = URL(string: "\(baseURL)/delete-account") else {
+            errorMessage = "Geçersiz sunucu adresi"
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        if let token = UserDefaults.standard.string(forKey: "user_token") {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("❌ Hesap silme hatası: \(error.localizedDescription)")
+                    self.errorMessage = "Hesap silinirken bir hata oluştu: \(error.localizedDescription)"
+                    return
+                }
+                
+                if let httpResponse = response as? HTTPURLResponse {
+                    print("📡 HTTP Durum Kodu: \(httpResponse.statusCode)")
+                    if httpResponse.statusCode == 200 {
+                        print("✅ Hesap başarıyla silindi!")
+                        
+                        // Kullanıcı verilerini temizle
+                        UserDefaults.standard.removeObject(forKey: "user_token")
+                        UserDefaults.standard.removeObject(forKey: "isLoggedIn")
+                        UserDefaults.standard.synchronize()
+                        
+                        // Auth ekranına yönlendir
+                        self.navigateToAuth = true
+                    } else {
+                        self.errorMessage = "Hesap silinirken bir hata oluştu (Kod: \(httpResponse.statusCode))"
+                    }
+                } else {
+                    self.errorMessage = "Sunucudan yanıt alınamadı"
+                }
+            }
+        }.resume()
     }
 }

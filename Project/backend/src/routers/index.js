@@ -5,10 +5,12 @@ const APIError = require('../utils/errors');
 const Response = require('../utils/response');
 const { upload } = require('../middlewares/lib/upload');
 const appointment = require('./appointment.routes');
+const meal = require('./meal.routes');
 
 
 router.use('/auth', auth);
 router.use('/appointment', appointment);
+router.use('/meals', meal);
 
 
 router.post("/upload", (req, res, next) => {

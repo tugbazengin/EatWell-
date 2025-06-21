@@ -32,11 +32,20 @@ struct AuthView: View {
                    Button(action: {
                         viewModel.authenticate()
                     }) {
-                        Text(viewModel.isRegistering ? "Kayıt Ol" : "Giriş Yap")
-                            .font(.appHeadline)
+                        HStack {
+                            if viewModel.isLoading {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .scaleEffect(0.9)
+                            }
+                            Text(viewModel.isRegistering ? "Kayıt Ol" : "Giriş Yap")
+                                .font(.appHeadline)
+                        }
                     }
                     .appButtonStyle(color: .green)
                     .padding(.horizontal, 30)
+                    .disabled(viewModel.isLoading)
+                    .opacity(viewModel.isLoading ? 0.7 : 1.0)
 
                   
                     if !viewModel.isRegistering {
@@ -58,6 +67,33 @@ struct AuthView: View {
                     }
                 }
             }
+            .overlay(
+                // Error Toast
+                VStack {
+                    if viewModel.showError {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.red)
+                            Text(viewModel.errorMessage ?? "Bir hata oluştu")
+                                .font(.appBody)
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.leading)
+                            Spacer()
+                        }
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.red.opacity(0.9))
+                        )
+                        .shadow(radius: 8)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: viewModel.showError)
+                        .padding(.horizontal)
+                    }
+                    Spacer()
+                }
+                .padding(.top, 20)
+            )
             .navigationDestination(isPresented: $viewModel.navigateToProfileSetup) {
                 ProfileSetupView()
             }

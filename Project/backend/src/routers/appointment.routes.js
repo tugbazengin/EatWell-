@@ -2,6 +2,8 @@ const router = require('express').Router();
 const appointmentController = require('../controllers/appointment.controller');
 const { tokenCheck } = require('../middlewares/auth');
 
+// Diyetisyen listesini getir
+router.get('/dietitians', tokenCheck, appointmentController.getDietitians);
 // Uygun saatleri getir
 router.get('/available', tokenCheck, appointmentController.getAvailableSlots);
 // Randevu oluştur

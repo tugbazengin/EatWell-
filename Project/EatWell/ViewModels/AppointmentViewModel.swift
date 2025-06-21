@@ -11,95 +11,178 @@ import SwiftUI
 class AppointmentViewModel: ObservableObject {
     @Published var appointment: NewAppointment
     @Published var times: [String] = []
-    @Published var dietitians: [Dietitian]
+    @Published var dietitians: [Dietitian] = []
     @Published var errorMessage: String?
     @Published var successMessage: String?
+    @Published var isLoading: Bool = false
 
-    let baseURL = "http://localhost:5002/appointment"
+    let baseURL = "http://localhost:5002/api/appointment"
 
     init() {
         self.appointment = NewAppointment()
-        self.dietitians = [
-            Dietitian(name: "Dr. Tuğba Zengin", specialization: "Klinik Beslenme Uzmanı", image: "dietitian1"),
-            Dietitian(name: "Dr. Berke Baş", specialization: "Sporcu Beslenmesi Uzmanı", image: "dietitian2"),
-            Dietitian(name: "Dr. Sıla Bıçakçı", specialization: "Diyetisyen", image: "dietitian3")
-        ]
+        loadDietitians()
+    }
+    
+    func loadDietitians() {
+        isLoading = true
+        
+        guard let token = UserDefaults.standard.string(forKey: "user_token") else {
+            errorMessage = "Token bulunamadı"
+            isLoading = false
+            return
+        }
+        
+        guard let url = URL(string: "\(baseURL)/dietitians") else {
+            errorMessage = "Geçersiz URL"
+            isLoading = false
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            DispatchQueue.main.async {
+                self?.isLoading = false
+                
+                if let error = error {
+                    self?.errorMessage = "Network hatası: \(error.localizedDescription)"
+                    return
+                }
+                
+                guard let data = data else {
+                    self?.errorMessage = "Veri alınamadı"
+                    return
+                }
+                
+                do {
+                    let result = try JSONDecoder().decode(DietitiansResponse.self, from: data)
+                    self?.dietitians = result.dietitians
+                } catch {
+                    self?.errorMessage = "JSON decode hatası: \(error)"
+                }
+            }
+        }.resume()
     }
 
     func fetchAvailableTimes() {
         guard let dietitian = appointment.selectedDietitian?.name else { return }
         
-        // Use simple date format for backend compatibility
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
         let dateString = dateFormatter.string(from: appointment.selectedDate)
         
-        guard let url = URL(string: "\(baseURL)/available?dietitian=\(dietitian.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&date=\(dateString)") else { return }
+        guard let token = UserDefaults.standard.string(forKey: "user_token") else {
+            errorMessage = "Token bulunamadı"
+            return
+        }
+        
+        guard let url = URL(string: "\(baseURL)/available?dietitian=\(dietitian.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&date=\(dateString)") else { 
+            errorMessage = "Geçersiz URL"
+            return 
+        }
+        
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
-        if let token = UserDefaults.standard.string(forKey: "jwtToken") {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             DispatchQueue.main.async {
                 if let error = error {
-                    self.errorMessage = error.localizedDescription
+                    self?.errorMessage = "Network hatası: \(error.localizedDescription)"
                     return
                 }
-                guard let data = data,
-                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                      let available = json["available"] as? [String] else {
-                    self.errorMessage = "Saatler alınamadı."
+                
+                guard let data = data else {
+                    self?.errorMessage = "Veri alınamadı"
                     return
                 }
-                self.times = available
+                
+                do {
+                    let result = try JSONDecoder().decode(AvailableTimesResponse.self, from: data)
+                    self?.times = result.available
+                } catch {
+                    self?.errorMessage = "Saatler alınamadı: \(error)"
+                }
             }
         }.resume()
     }
 
     func confirmAppointment() {
         guard let dietitian = appointment.selectedDietitian?.name,
-              let time = appointment.selectedTime else { return }
+              let time = appointment.selectedTime else { 
+            errorMessage = "Lütfen diyetisyen ve saat seçin"
+            return 
+        }
         
-        // Use simple date format for backend compatibility
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
         let dateString = dateFormatter.string(from: appointment.selectedDate)
         
-        guard let url = URL(string: baseURL) else { return }
+        guard let token = UserDefaults.standard.string(forKey: "user_token") else {
+            errorMessage = "Token bulunamadı"
+            return
+        }
+        
+        guard let url = URL(string: baseURL) else { 
+            errorMessage = "Geçersiz URL"
+            return 
+        }
+        
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        if let token = UserDefaults.standard.string(forKey: "jwtToken") {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
         let body: [String: Any] = [
             "dietitian": dietitian,
             "date": dateString,
             "time": time
         ]
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        } catch {
+            errorMessage = "İstek oluşturulamadı"
+            return
+        }
+        
+        isLoading = true
+        
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             DispatchQueue.main.async {
+                self?.isLoading = false
+                
                 if let error = error {
-                    self.errorMessage = error.localizedDescription
+                    self?.errorMessage = "Network hatası: \(error.localizedDescription)"
                     return
                 }
                 
-                guard let data = data,
-                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                    self.errorMessage = "Geçersiz sunucu yanıtı."
+                guard let data = data else {
+                    self?.errorMessage = "Veri alınamadı"
                     return
                 }
                 
-                if let success = json["success"] as? Bool, success {
-                    self.successMessage = "Randevu başarıyla oluşturuldu."
-                    self.errorMessage = nil
-                    // Reset form after successful appointment
-                    self.resetSelection()
-                } else {
-                    let message = json["message"] as? String ?? "Randevu oluşturulamadı."
-                    self.errorMessage = message
+                do {
+                    let result = try JSONDecoder().decode(AppointmentResponse.self, from: data)
+                    if result.success {
+                        self?.successMessage = result.message
+                        self?.errorMessage = nil
+                        self?.resetSelection()
+                    } else {
+                        self?.errorMessage = result.message
+                    }
+                } catch {
+                    // Fallback to old JSON parsing for error handling
+                    if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                        let message = json["message"] as? String ?? "Randevu oluşturulamadı"
+                        self?.errorMessage = message
+                    } else {
+                        self?.errorMessage = "Sunucu yanıtı işlenemedi"
+                    }
                 }
             }
         }.resume()
@@ -113,5 +196,29 @@ class AppointmentViewModel: ObservableObject {
         successMessage = nil
         errorMessage = nil
     }
+}
+
+// MARK: - Response Models
+struct DietitiansResponse: Codable {
+    let dietitians: [Dietitian]
+}
+
+struct AvailableTimesResponse: Codable {
+    let available: [String]
+}
+
+struct AppointmentResponse: Codable {
+    let success: Bool
+    let message: String
+    let appointment: AppointmentData?
+}
+
+struct AppointmentData: Codable {
+    let _id: String
+    let user: String
+    let dietitian: String
+    let date: String
+    let time: String
+    let status: String
 }
 

@@ -49,7 +49,7 @@ const tokenCheck = async (req, res, next) => {
 
         const decoded = await jwt.verify(token, process.env.JWT_SECRET_KEY);
 
-        const userInfo = await User.findById(decoded.sub).select("_id name lastname email phone");
+        const userInfo = await User.findById(decoded.sub).select("-password -resetCode -resetTime");
 
         if (!userInfo) {
             throw new APIError("Kullanıcı bulunamadı", 401)

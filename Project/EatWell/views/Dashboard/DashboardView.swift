@@ -29,13 +29,8 @@ struct DashboardView: View {
                     .padding(.top, 20)
 
                     VStack(spacing: 10) {
-                        HStack(spacing: 20) {
-                            NavigationLink(destination: MealPlanView()) {
-                                AccessCard(icon: "leaf.fill", title: "Beslenme Planı")
-                            }
-                            NavigationLink(destination: MealRecipesView()) {
-                                AccessCard(icon: "book.fill", title: "Yemek Önerileri")
-                            }
+                        NavigationLink(destination: MealPlanView()) {
+                            AccessCard(icon: "leaf.fill", title: "Beslenme Planı")
                         }
 
                         HStack(spacing: 20) {

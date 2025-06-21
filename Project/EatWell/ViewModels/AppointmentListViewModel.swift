@@ -4,71 +4,88 @@ import SwiftUI
 class AppointmentListViewModel: ObservableObject {
     @Published var appointments: [Appointment] = []
     @Published var errorMessage: String?
+    @Published var isLoading: Bool = false
 
-    let baseURL = "http://localhost:5002/appointment"
+    let baseURL = "http://localhost:5002/api/appointment"
 
     // Randevuları getir
     func fetchAppointments() {
-        guard let url = URL(string: "\(baseURL)/my") else { return }
+        isLoading = true
+        
+        guard let token = UserDefaults.standard.string(forKey: "user_token") else {
+            errorMessage = "Token bulunamadı"
+            isLoading = false
+            return
+        }
+        
+        guard let url = URL(string: "\(baseURL)/my") else {
+            errorMessage = "Geçersiz URL"
+            isLoading = false
+            return
+        }
 
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        // JWT Token ekle
-        if let token = UserDefaults.standard.string(forKey: "jwtToken") {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
-
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             DispatchQueue.main.async {
+                self?.isLoading = false
+                
                 if let error = error {
-                    self.errorMessage = "Hata: \(error.localizedDescription)"
+                    self?.errorMessage = "Network hatası: \(error.localizedDescription)"
                     return
                 }
 
                 guard let data = data else {
-                    self.errorMessage = "Veri alınamadı."
+                    self?.errorMessage = "Veri alınamadı"
                     return
                 }
 
                 do {
-                    let decoder = JSONDecoder()
-                    let decodedResponse = try decoder.decode(AppointmentResponse.self, from: data)
-                    self.appointments = decodedResponse.appointments
+                    let result = try JSONDecoder().decode(MyAppointmentsResponse.self, from: data)
+                    self?.appointments = result.appointments
                 } catch {
-                    self.errorMessage = "Çözümleme hatası: \(error.localizedDescription)"
+                    self?.errorMessage = "JSON decode hatası: \(error)"
                 }
             }
         }.resume()
     }
 
-    // Randevu sil
-    func removeAppointment(_ appointment: Appointment) {
-        guard let url = URL(string: "\(baseURL)/\(appointment.id)") else { return }
+    // Randevu iptal et
+    func cancelAppointment(_ appointment: Appointment) {
+        guard let token = UserDefaults.standard.string(forKey: "user_token") else {
+            errorMessage = "Token bulunamadı"
+            return
+        }
+        
+        guard let url = URL(string: "\(baseURL)/\(appointment.id)") else {
+            errorMessage = "Geçersiz URL"
+            return
+        }
 
         var request = URLRequest(url: url)
         request.httpMethod = "DELETE"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        if let token = UserDefaults.standard.string(forKey: "jwtToken") {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
-
-        URLSession.shared.dataTask(with: request) { _, _, error in
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             DispatchQueue.main.async {
                 if let error = error {
-                    self.errorMessage = "Silme hatası: \(error.localizedDescription)"
+                    self?.errorMessage = "İptal hatası: \(error.localizedDescription)"
                     return
                 }
 
                 // Başarılıysa listeyi güncelle
-                self.fetchAppointments()
+                self?.fetchAppointments()
             }
         }.resume()
     }
 }
 
-// API'den gelen cevabı karşılamak için struct (örnek JSON: { appointments: [...] })
-struct AppointmentResponse: Codable {
+// API'den gelen cevabı karşılamak için struct
+struct MyAppointmentsResponse: Codable {
     let appointments: [Appointment]
 }
 

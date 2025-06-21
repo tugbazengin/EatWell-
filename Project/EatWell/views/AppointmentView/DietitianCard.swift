@@ -12,20 +12,37 @@ struct DietitianCard: View {
     let onTap: () -> Void
 
     var body: some View {
-        VStack {
-            Image(dietitian.image)
-                .resizable()
-                .scaledToFill()
+        VStack(spacing: 8) {
+            // Placeholder image since we don't have actual images
+            Circle()
+                .fill(LinearGradient(gradient: Gradient(colors: [Color.green.opacity(0.7), Color.blue.opacity(0.7)]), startPoint: .topLeading, endPoint: .bottomTrailing))
                 .frame(width: 80, height: 80)
-                .clipShape(Circle())
+                .overlay(
+                    Text(String(dietitian.name.prefix(1)))
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                )
                 .overlay(
                     Circle()
                         .stroke(isSelected ? Color.green : Color.gray, lineWidth: 3)
                 )
 
-            Text(dietitian.name)
-                .font(.appBody)
-                .multilineTextAlignment(.center)
+            VStack(spacing: 4) {
+                Text(dietitian.name)
+                    .font(.appBody)
+                    .fontWeight(.semibold)
+                    .multilineTextAlignment(.center)
+                
+                Text(dietitian.specialty)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                
+                Text(dietitian.experience)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
         }
         .padding(12) 
         .background(

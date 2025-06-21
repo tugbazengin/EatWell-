@@ -5,11 +5,11 @@ const apiLimiter = rateLimit({
     max: (req, res) => {
         console.log("api url : ", req.url);
         if (req.url == "/login" || req.url == "/register") {
-            return 20; // 👈 100'den 5'e düşürdük
+            return 200; // 👈 100'den 5'e düşürdük
         } else if (req.url == "/forget-password") {
-            return 30; // 👈 Şifre sıfırlama için 3
+            return 300; // 👈 Şifre sıfırlama için 3
         } else {
-            return 10; // 👈 100'den 10'a düşürdük
+            return 100; // 👈 100'den 10'a düşürdük
         }
     },
     message: {

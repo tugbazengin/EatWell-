@@ -120,14 +120,6 @@ const forgetPassword = async (req, res, next) => {
             throw new APIError("Kullanıcı bulunamadı", 404);
         }
         
-        // Environment değişkenlerini kontrol et
-        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-            console.error("❌ E-posta gönderimi için gerekli environment değişkenleri eksik:");
-            console.error("EMAIL_USER:", process.env.EMAIL_USER ? "✅ Tanımlı" : "❌ Tanımlı değil");
-            console.error("EMAIL_PASS:", process.env.EMAIL_PASS ? "✅ Tanımlı" : "❌ Tanımlı değil");
-            throw new APIError("E-posta servisi yapılandırılmamış. Lütfen sistem yöneticisi ile iletişime geçin.", 500);
-        }
-        
         const resetCode = crypto.randomBytes(3).toString("hex");
         const resetTime = moment(new Date()).add(10, "minutes").toDate();
         
@@ -135,16 +127,25 @@ const forgetPassword = async (req, res, next) => {
         console.log("📧 Alıcı:", userInfo.email);
         console.log("📧 Reset kodu:", resetCode);
         
-        // Email gönderme işlemi
-        const emailResult = await sendEmail({
-            from: process.env.EMAIL_USER,
-            to: userInfo.email,
-            subject: "Şifre Sıfırlama",
-            text: `Merhaba ${userInfo.name} ${userInfo.lastname},\n\nŞifrenizi sıfırlamak için aşağıdaki kodu kullanabilirsiniz:\n\n${resetCode}\n\nBu kod 10 dakika geçerlidir.\n\nTeşekkürler`
-        });
+        // Development modunda e-posta gönderme işlemini bypass et
+        const isDevelopment = !process.env.EMAIL_USER || !process.env.EMAIL_PASS;
         
-        if (!emailResult) {
-            throw new APIError("E-posta gönderilemedi. Lütfen daha sonra tekrar deneyin.", 500);
+        if (isDevelopment) {
+            console.log("🚨 DEVELOPMENT MODE: E-posta gönderimi bypass edildi");
+            console.log("🔑 Reset Code:", resetCode);
+            console.log("⏰ Kod geçerlilik süresi: 10 dakika");
+        } else {
+            // Production modunda e-posta gönder
+            const emailResult = await sendEmail({
+                from: process.env.EMAIL_USER,
+                to: userInfo.email,
+                subject: "Şifre Sıfırlama",
+                text: `Merhaba ${userInfo.name} ${userInfo.lastname},\n\nŞifrenizi sıfırlamak için aşağıdaki kodu kullanabilirsiniz:\n\n${resetCode}\n\nBu kod 10 dakika geçerlidir.\n\nTeşekkürler`
+            });
+            
+            if (!emailResult) {
+                throw new APIError("E-posta gönderilemedi. Lütfen daha sonra tekrar deneyin.", 500);
+            }
         }
         
         // Kullanıcı reset kodunu ve süresini güncelle
@@ -153,9 +154,13 @@ const forgetPassword = async (req, res, next) => {
             resetTime: resetTime
         });
         
-        console.log("✅ Şifre sıfırlama kodu başarıyla gönderildi:", userInfo.email);
+        console.log("✅ Şifre sıfırlama kodu başarıyla kaydedildi:", userInfo.email);
         
-        return new Response(true, "Şifre sıfırlama kodu e-posta adresinize gönderildi", 200).success(res);
+        const message = isDevelopment 
+            ? `Şifre sıfırlama kodu: ${resetCode} (Test modu - gerçek e-posta gönderilmedi)`
+            : "Şifre sıfırlama kodu e-posta adresinize gönderildi";
+        
+        return new Response(true, message, 200).success(res);
     } catch (err) {
         console.error("❌ Forget Password Error:", err);
         next(err); // Hata yönetim middleware'ine hatayı ilet

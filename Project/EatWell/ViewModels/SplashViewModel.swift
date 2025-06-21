@@ -13,6 +13,7 @@ final class SplashViewModel: ObservableObject {
     @Published var showSlogan = false
     @Published var showLoading = false
     @Published var navigateToAuth = false
+    @Published var navigateToDashboard = false
     
     let title = "EatWell"
     let slogan = "Sağlıklı beslen, mutlu yaşa!"
@@ -32,6 +33,15 @@ final class SplashViewModel: ObservableObject {
             }
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            self.checkLoginStatus()
+        }
+    }
+    
+    private func checkLoginStatus() {
+        // Giriş yapmış kullanıcıları Dashboard'a yönlendir
+        if UserDefaults.standard.string(forKey: "user_token") != nil {
+            self.navigateToDashboard = true
+        } else {
             self.navigateToAuth = true
         }
     }

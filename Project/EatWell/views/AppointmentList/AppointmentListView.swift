@@ -11,27 +11,68 @@ struct AppointmentListView: View {
 
     var body: some View {
         BaseView(title: "Randevularım", showsScrollView: true) {
-            if viewModel.appointments.isEmpty {
-                Text("Henüz randevunuz bulunmamaktadır.")
-                    .font(.appHeadline)
-                    .foregroundColor(.gray)
+            if viewModel.isLoading {
+                VStack {
+                    ProgressView()
+                        .scaleEffect(1.5)
+                    Text("Randevular yükleniyor...")
+                        .font(.appBody)
+                        .foregroundColor(.secondary)
+                        .padding(.top)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if viewModel.appointments.isEmpty {
+                VStack(spacing: 20) {
+                    Image(systemName: "calendar.badge.exclamationmark")
+                        .font(.system(size: 60))
+                        .foregroundColor(.gray.opacity(0.5))
+                    
+                    Text("Henüz randevunuz bulunmamaktadır.")
+                        .font(.appHeadline)
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+                    
+                    Text("Randevu almak için Ana Sayfa'daki Randevu Al seçeneğini kullanabilirsiniz.")
+                        .font(.appBody)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                VStack(spacing: 15) {
+                LazyVStack(spacing: 12) {
                     ForEach(viewModel.appointments) { appointment in
                         AppointmentCard(appointment: appointment) {
-                            viewModel.removeAppointment(appointment)
+                            viewModel.cancelAppointment(appointment)
                         }
                     }
                 }
+                .padding(.top)
             }
             
             if let errorMessage = viewModel.errorMessage {
-                Text(errorMessage)
-                    .foregroundColor(.red)
-                    .font(.appBody)
+                VStack {
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                        .font(.appBody)
+                        .multilineTextAlignment(.center)
+                        .padding()
+                        .background(Color.red.opacity(0.1))
+                        .cornerRadius(8)
+                        .padding(.horizontal)
+                    
+                    Button("Tekrar Dene") {
+                        viewModel.fetchAppointments()
+                    }
+                    .appButtonStyle(color: .blue)
+                    .padding(.horizontal)
+                }
             }
         }
         .onAppear {
+            viewModel.fetchAppointments()
+        }
+        .refreshable {
             viewModel.fetchAppointments()
         }
     }

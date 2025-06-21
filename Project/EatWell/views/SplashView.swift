@@ -28,7 +28,7 @@ struct SplashView: View {
                 }
                 
                 if viewModel.showSlogan {
-                    Text(viewModel.slogan)
+Text(viewModel.slogan)
                         .font(.title2)
                         .foregroundColor(.white)
                         .padding(.top, 10)
@@ -50,6 +50,9 @@ struct SplashView: View {
         }
         .fullScreenCover(isPresented: $viewModel.navigateToAuth) {
             AuthView()
+        }
+        .fullScreenCover(isPresented: $viewModel.navigateToDashboard) {
+            ContentView()
         }
     }
 }
