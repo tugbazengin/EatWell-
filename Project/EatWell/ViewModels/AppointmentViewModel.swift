@@ -71,6 +71,7 @@ class AppointmentViewModel: ObservableObject {
     func fetchAvailableTimes() {
         guard let dietitian = appointment.selectedDietitian?.name else { 
             // Eğer diyetisyen seçilmemişse default saatleri göster
+            print("🔍 Diyetisyen seçilmemiş, default saatler gösteriliyor")
             setDefaultTimes()
             return 
         }
@@ -79,46 +80,82 @@ class AppointmentViewModel: ObservableObject {
         dateFormatter.dateFormat = "yyyy-MM-dd"
         let dateString = dateFormatter.string(from: appointment.selectedDate)
         
+        print("📅 Randevu saatleri isteniyor - Diyetisyen: \(dietitian), Tarih: \(dateString)")
+        
         guard let token = UserDefaults.standard.string(forKey: "user_token") else {
             errorMessage = "Token bulunamadı"
+            print("❌ Token bulunamadı, default saatler kullanılacak")
             setDefaultTimes()
             return
         }
         
         guard let url = URL(string: "\(baseURL)/available?dietitian=\(dietitian.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&date=\(dateString)") else { 
             errorMessage = "Geçersiz URL"
+            print("❌ Geçersiz URL, default saatler kullanılacak")
             setDefaultTimes()
             return 
         }
+        
+        print("🌐 API Çağrısı yapılıyor: \(url)")
         
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
+        // Loading durumunu temizle, sadece saatler için yükleniyor
+        times = [] // Önceki saatleri temizle
+        
         URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             DispatchQueue.main.async {
                 if let error = error {
-                    self?.errorMessage = "Network hatası: \(error.localizedDescription)"
+                    print("❌ Network hatası: \(error.localizedDescription)")
+                    self?.errorMessage = "Bağlantı hatası, mevcut tüm saatler gösteriliyor"
                     self?.setDefaultTimes()
                     return
                 }
                 
                 guard let data = data else {
-                    self?.errorMessage = "Veri alınamadı"
+                    print("❌ Veri alınamadı, default saatler kullanılacak")
+                    self?.errorMessage = "Sunucudan veri alınamadı"
                     self?.setDefaultTimes()
                     return
                 }
                 
+                // Response'u debug için yazdır
+                if let responseString = String(data: data, encoding: .utf8) {
+                    print("📡 API Response: \(responseString)")
+                }
+                
+                // HTTP status kodu kontrol et
+                if let httpResponse = response as? HTTPURLResponse {
+                    print("📊 HTTP Status: \(httpResponse.statusCode)")
+                    
+                    if httpResponse.statusCode != 200 {
+                        print("❌ HTTP Error \(httpResponse.statusCode), default saatler kullanılacak")
+                        self?.errorMessage = "Sunucu hatası (\(httpResponse.statusCode))"
+                        self?.setDefaultTimes()
+                        return
+                    }
+                }
+                
                 do {
                     let result = try JSONDecoder().decode(AvailableTimesResponse.self, from: data)
+                    print("✅ API'dan alınan saatler: \(result.available)")
+                    
                     if result.available.isEmpty {
-                        self?.setDefaultTimes()
+                        print("⚠️ Bu tarih/diyetisyen için uygun saat yok")
+                        self?.times = []
+                        self?.errorMessage = "Bu tarih için uygun randevu saati bulunmuyor"
                     } else {
+                        print("✅ \(result.available.count) uygun saat bulundu")
                         self?.times = result.available
+                        self?.errorMessage = nil // Başarılı olduğunda hata mesajını temizle
                     }
                 } catch {
-                    print("API'dan saat alınamadı: \(error), default saatler kullanılacak")
+                    print("❌ JSON parse hatası: \(error)")
+                    print("🔄 Backend'de sorun olabilir, default saatler gösteriliyor")
+                    self?.errorMessage = "Sunucu verisi işlenemedi, tüm saatler gösteriliyor"
                     self?.setDefaultTimes()
                 }
             }
@@ -126,12 +163,13 @@ class AppointmentViewModel: ObservableObject {
     }
     
     private func setDefaultTimes() {
-        // Varsayılan çalışma saatleri
+        // Varsayılan çalışma saatleri (backend hazır değilse)
         times = [
             "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
             "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
             "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"
         ]
+        print("🕒 Default saatler yüklendi: \(times.count) saat mevcut")
     }
 
     func confirmAppointment() {

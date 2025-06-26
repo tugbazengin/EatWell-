@@ -11,7 +11,11 @@ const DIETITIANS = [
 ];
 
 // Belirli bir gün ve diyetisyen için mevcut saatler
-const AVAILABLE_HOURS = ['09:00', '10:00', '11:00', '13:00', '14:00', '16:00'];
+const AVAILABLE_HOURS = [
+  '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+  '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
+  '15:00', '15:30', '16:00', '16:30', '17:00', '17:30'
+];
 
 // Diyetisyen listesini getir
 exports.getDietitians = async (req, res) => {
@@ -26,18 +30,33 @@ exports.getDietitians = async (req, res) => {
 exports.getAvailableSlots = async (req, res) => {
   try {
     const { dietitian, date } = req.query;
-    if (!dietitian || !date) return res.status(400).json({ message: 'Diyetisyen ve tarih zorunlu.' });
+    console.log(`📅 Available slots isteniyor - Diyetisyen: ${dietitian}, Tarih: ${date}`);
+    
+    if (!dietitian || !date) {
+      console.log('❌ Eksik parametre: dietitian veya date');
+      return res.status(400).json({ message: 'Diyetisyen ve tarih zorunlu.' });
+    }
+    
     const dayStart = moment(date).startOf('day');
     const dayEnd = moment(date).endOf('day');
+    
+    console.log(`🔍 Alınmış randevular aranıyor: ${dayStart.format()} - ${dayEnd.format()}`);
+    
     const taken = await Appointment.find({
       dietitian,
       date: { $gte: dayStart.toDate(), $lte: dayEnd.toDate() },
       status: { $ne: 'cancelled' }
     });
+    
     const takenTimes = taken.map(a => a.time);
+    console.log(`⏰ Alınmış saatler: ${takenTimes.length > 0 ? takenTimes.join(', ') : 'Hiçbiri'}`);
+    
     const available = AVAILABLE_HOURS.filter(h => !takenTimes.includes(h));
+    console.log(`✅ Müsait saatler: ${available.length > 0 ? available.join(', ') : 'Hiçbiri'}`);
+    
     res.json({ available });
   } catch (err) {
+    console.log('❌ Available slots hatası:', err.message);
     res.status(500).json({ message: err.message });
   }
 };
@@ -48,7 +67,10 @@ exports.createAppointment = async (req, res) => {
     const { dietitian, date, time } = req.body;
     const user = req.user._id;
     
+    console.log(`🆕 Yeni randevu talebi - User: ${user}, Diyetisyen: ${dietitian}, Tarih: ${date}, Saat: ${time}`);
+    
     if (!dietitian || !date || !time) {
+      console.log('❌ Eksik parametre: dietitian, date veya time');
       return res.status(400).json({ message: 'Tüm alanlar zorunlu.' });
     }
     
@@ -57,6 +79,7 @@ exports.createAppointment = async (req, res) => {
     const today = moment().startOf('day');
     
     if (appointmentDate.isBefore(today)) {
+      console.log('❌ Geçmiş tarih seçildi');
       return res.status(400).json({ message: 'Geçmiş tarihler için randevu alınamaz.' });
     }
     
@@ -69,6 +92,7 @@ exports.createAppointment = async (req, res) => {
     });
     
     if (exists) {
+      console.log(`❌ Saat dolu - Mevcut randevu: ${exists._id}`);
       return res.status(400).json({ message: 'Bu saat dolu.' });
     }
     
@@ -80,12 +104,15 @@ exports.createAppointment = async (req, res) => {
       status: 'approved' // Onay kısmını kaldırıyoruz, direkt onaylı olacak
     });
     
+    console.log(`✅ Randevu oluşturuldu - ID: ${appointment._id}`);
+    
     res.status(201).json({ 
       success: true,
       message: 'Randevu başarıyla oluşturuldu.',
       appointment 
     });
   } catch (err) {
+    console.log('❌ Randevu oluşturma hatası:', err.message);
     res.status(500).json({ message: err.message });
   }
 };
