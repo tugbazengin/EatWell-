@@ -11,7 +11,7 @@ class ProfileSetupViewModel: ObservableObject {
     @Published var user: UserProfile
     @Published var isProfileCompleted: Bool
 
-    let baseURL = "http://localhost:5002/api/auth"
+    let baseURL = APIConfig.authURL
 
     init(user: UserProfile = UserProfile(
                 fullName: "",

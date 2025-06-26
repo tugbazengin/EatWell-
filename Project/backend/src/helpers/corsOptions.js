@@ -4,6 +4,7 @@ const whitelist = [
     'http://192.168.172.217:5002',  // Yeni IP
     'http://10.0.2.2:5002',         // Android emulator
     'http://172.16.4.65:5002',
+    'http://172.20.10.12:5002',     // Güncel IP adresi
     'http://localhost:19006',        // Expo web
     'http://localhost:19000',        // Expo
 ]

@@ -17,7 +17,7 @@ class AuthViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var showError: Bool = false
 
-    let baseURL = "http://localhost:5002/api/auth"
+    let baseURL = APIConfig.authURL
 
     init(email: String = "",
          password: String = "",

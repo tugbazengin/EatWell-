@@ -53,6 +53,10 @@ struct DashboardView: View {
                 }
             }
             .navigationBarHidden(true)
+            .onAppear {
+                // Her görüntülendiğinde dashboard verilerini yenile
+                viewModel.refreshDashboard()
+            }
         }
     }
 }

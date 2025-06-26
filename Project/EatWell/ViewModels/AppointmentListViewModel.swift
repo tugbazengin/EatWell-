@@ -6,7 +6,7 @@ class AppointmentListViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
 
-    let baseURL = "http://localhost:5002/api/appointment"
+    let baseURL = APIConfig.appointmentURL
 
     // Randevuları getir
     func fetchAppointments() {

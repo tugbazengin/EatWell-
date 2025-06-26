@@ -4,44 +4,51 @@ const connectDB = async () => {
   try {
     const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/safeway';
     
-    await mongoose.connect(mongoURI);
+    // Basit bağlantı ayarları
+    const options = {
+      serverSelectionTimeoutMS: 5000, // 5 saniye timeout
+      connectTimeoutMS: 10000, // 10 saniye bağlantı timeout'u
+    };
+    
+    await mongoose.connect(mongoURI, options);
     
     console.log('✅ MongoDB veritabanına başarıyla bağlandı');
     console.log('📍 Database:', mongoose.connection.name);
     console.log('🌐 Host:', mongoose.connection.host);
-    console.log('🔌 Port:', mongoose.connection.port);
     
   } catch (error) {
     console.error('❌ MongoDB bağlantı hatası:', error.message);
     console.error('💡 Kontrol edilecekler:');
-    console.error('   - MongoDB servisi çalışıyor mu?');
     console.error('   - MONGODB_URI .env dosyasında doğru tanımlı mı?');
-    console.error('   - Ağ bağlantısı var mı?');
+    console.error('   - Internet bağlantısı var mı?');
+    console.error('   - MongoDB Atlas IP whitelist kontrolü');
     
-    // Geliştirme ortamında uygulamayı durdur
-    if (process.env.NODE_ENV !== 'production') {
-      process.exit(1);
-    }
+    // Tekrar deneme YOK - sadece hata ver ve devam et
+    console.log('🛑 Uygulama MongoDB olmadan devam ediyor...');
   }
 };
 
-// Bağlantı olaylarını dinle
+// Bağlantı olaylarını basit şekilde dinle
 mongoose.connection.on('connected', () => {
-  console.log('🔗 Mongoose MongoDB\'ye bağlandı');
+  console.log('🔗 MongoDB bağlantısı kuruldu');
 });
 
 mongoose.connection.on('error', (err) => {
-  console.error('❌ Mongoose bağlantı hatası:', err);
+  console.error('❌ MongoDB hatası:', err.message);
 });
 
 mongoose.connection.on('disconnected', () => {
-  console.log('🔌 Mongoose MongoDB bağlantısı kesildi');
+  console.log('🔌 MongoDB bağlantısı kesildi');
 });
 
 // Uygulama kapanırken bağlantıyı temizle
 process.on('SIGINT', async () => {
-  await mongoose.connection.close();
-  console.log('👋 MongoDB bağlantısı kapatıldı');
+  try {
+    await mongoose.connection.close();
+    console.log('👋 MongoDB bağlantısı kapatıldı');
+  } catch (error) {
+    console.error('❌ Bağlantı kapatılırken hata:', error.message);
+  }
   process.exit(0);
 });
 

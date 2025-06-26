@@ -15,8 +15,27 @@ class DashboardViewModel: ObservableObject {
     @Published var motivationQuote: String = "Başarı, küçük ama istikrarlı adımlarla gelir! 💪"
     @Published var isLoading: Bool = false
     
+    // Kullanıcı verileri
+    private var userAge: Int = 0
+    private var userHeight: Double = 0
+    private var userWeight: Double = 0
+    private var userTargetWeight: Double = 0
+    
     init() {
         loadUserProfile()
+        
+        // Profil güncellendiğinde dashboard'ı yenile
+        NotificationCenter.default.addObserver(
+            forName: .profileUpdated,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.loadUserProfile()
+        }
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
     
     func loadUserProfile() {
@@ -28,7 +47,7 @@ class DashboardViewModel: ObservableObject {
             return
         }
         
-        guard let url = URL(string: "http://localhost:5002/api/auth/me") else {
+        guard let url = URL(string: "\(APIConfig.authURL)/me") else {
             print("Geçersiz URL")
             isLoading = false
             return
@@ -58,18 +77,69 @@ class DashboardViewModel: ObservableObject {
                     if result.success {
                         self?.userName = result.data.name
                         
-                        // BMI hesapla (eğer height ve weight varsa)
-                        if let height = result.data.height, let weight = result.data.weight, height > 0 {
-                            let heightInMeters = Double(height) / 100
-                            let bmi = Double(weight) / (heightInMeters * heightInMeters)
-                            self?.bmi = String(format: "%.1f BMI", bmi)
-                        }
+                        // Kullanıcı verilerini kaydet
+                        self?.userAge = result.data.age ?? 25
+                        self?.userHeight = Double(result.data.height ?? 170)
+                        self?.userWeight = Double(result.data.weight ?? 70)
+                        self?.userTargetWeight = Double(result.data.targetWeight ?? 65)
+                        
+                        // Hesaplamaları yap
+                        self?.calculateHealthMetrics()
                     }
                 } catch {
                     print("JSON decode hatası: \(error)")
                 }
             }
         }.resume()
+    }
+    
+    private func calculateHealthMetrics() {
+        calculateBMI()
+        calculateDailyCalories()
+        calculateDailyWaterIntake()
+    }
+    
+    private func calculateBMI() {
+        guard userHeight > 0 && userWeight > 0 else {
+            bmi = "-- BMI"
+            return
+        }
+        let heightInMeters = userHeight / 100
+        let bmiValue = userWeight / (heightInMeters * heightInMeters)
+        bmi = String(format: "%.1f BMI", bmiValue)
+    }
+    
+    private func calculateDailyCalories() {
+        guard userHeight > 0 && userWeight > 0 && userAge > 0 else {
+            dailyCalories = "-- kcal"
+            return
+        }
+        
+        // BMR hesaplama (Mifflin-St Jeor Equation for women)
+        let bmr = 10 * userWeight + 6.25 * userHeight - 5 * Double(userAge) + 5
+        
+        // Hedef kilo farkı varsa deficit hesapla
+        let deficitCalories = userTargetWeight > 0 ? (userWeight - userTargetWeight) * 7700 / 30 : 0
+        
+        // Minimum 1200 kalori
+        let dailyCalorieIntake = max(1200, bmr - deficitCalories)
+        
+        dailyCalories = String(format: "%.0f kcal", dailyCalorieIntake)
+    }
+    
+    private func calculateDailyWaterIntake() {
+        guard userWeight > 0 else {
+            waterIntake = "-- L"
+            return
+        }
+        
+        let waterIntakeValue = userWeight * 0.033
+        waterIntake = String(format: "%.1f L", waterIntakeValue)
+    }
+    
+    // Profil güncellendiğinde dashboard'ı yenile
+    func refreshDashboard() {
+        loadUserProfile()
     }
 }
 

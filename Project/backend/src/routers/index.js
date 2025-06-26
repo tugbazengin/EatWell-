@@ -29,6 +29,11 @@ router.post("/upload", (req, res, next) => {
    });
 });
 
+// Health check endpoint (network testi için)
+router.get("/health", (req, res) => {
+    res.status(200).json({ status: "OK", timestamp: new Date().toISOString() });
+});
+
 module.exports = router;
 
 

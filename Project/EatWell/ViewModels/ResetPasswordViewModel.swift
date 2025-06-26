@@ -20,7 +20,7 @@ class ResetPasswordViewModel: ObservableObject {
     
     @Published var navigateToAuthView = false
     
-    let baseURL = "http://localhost:5002/api/auth"
+    let baseURL = APIConfig.authURL
 
     func handleButtonPress() {
         if !isPasswordReset {

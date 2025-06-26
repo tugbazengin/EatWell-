@@ -15,7 +15,7 @@ class ProfileViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
     @Published var showSuccessMessage: Bool = false
-    let baseURL = "http://localhost:5002/api/auth"
+    let baseURL = APIConfig.authURL
 
     init() {
         self.profile = UserProfile(fullName: "", age: 0, height: 0, weight: 0, phoneNumber: "", targetWeight: 0, bmi: nil, dailyCalories: nil, dailyWaterIntake: nil, dailyWater: 0)
@@ -137,6 +137,9 @@ class ProfileViewModel: ObservableObject {
                         
                         // Profil güncellendikten sonra hesaplamaları hemen yap
                         self.calculateHealthMetrics()
+                        
+                        // Dashboard'ın güncellenmesi için notification gönder
+                        NotificationCenter.default.post(name: .profileUpdated, object: nil)
                     }
                 }
             }
@@ -187,4 +190,9 @@ class ProfileViewModel: ObservableObject {
             }
         }.resume()
     }
+}
+
+// Notification name'i extension
+extension Notification.Name {
+    static let profileUpdated = Notification.Name("profileUpdated")
 }

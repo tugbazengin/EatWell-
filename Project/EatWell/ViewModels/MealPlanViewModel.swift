@@ -24,7 +24,7 @@ final class MealPlanViewModel: ObservableObject {
     @Published var calorieWarning: String = ""
     @Published var showCalorieWarning = false
     
-    private let baseURL = "http://localhost:5002/api"
+    private let baseURL = APIConfig.generalURL
     
     // Kategoriler
     let categories = ["Kahvaltı", "Öğle Yemeği", "Akşam Yemeği", "Atıştırmalık", "Çorba", "Tatlı"]

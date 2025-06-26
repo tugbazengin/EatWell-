@@ -16,7 +16,7 @@ class AppointmentViewModel: ObservableObject {
     @Published var successMessage: String?
     @Published var isLoading: Bool = false
 
-    let baseURL = "http://localhost:5002/api/appointment"
+    let baseURL = APIConfig.appointmentURL
 
     init() {
         self.appointment = NewAppointment()
