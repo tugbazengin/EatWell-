@@ -34,6 +34,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				.gitignore,
+				APIConfig.swift,
 				Assets.xcassets,
 				EatWellApp.swift,
 				Models/Appointment.swift,
@@ -44,6 +45,7 @@
 				Models/ResetPasswordData.swift,
 				Models/UserCredentials.swift,
 				Models/UserProfile.swift,
+				NetworkManager.swift,
 				"Preview Content/Preview Assets.xcassets",
 				Style.swift,
 				ViewModels/AppointmentListViewModel.swift,
@@ -90,6 +92,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				.gitignore,
+				APIConfig.swift,
 				Assets.xcassets,
 				EatWellApp.swift,
 				Models/Appointment.swift,
@@ -100,6 +103,7 @@
 				Models/ResetPasswordData.swift,
 				Models/UserCredentials.swift,
 				Models/UserProfile.swift,
+				NetworkManager.swift,
 				"Preview Content/Preview Assets.xcassets",
 				Style.swift,
 				ViewModels/AppointmentListViewModel.swift,
@@ -108,6 +112,7 @@
 				ViewModels/DashboardViewModel.swift,
 				ViewModels/MealPlanViewModel.swift,
 				ViewModels/MealRecipesViewModel.swift,
+				ViewModels/ProfileSetupViewModel.swift,
 				ViewModels/ProfileViewModel.swift,
 				ViewModels/ResetPasswordViewModel.swift,
 				ViewModels/SplashViewModel.swift,
