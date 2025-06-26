@@ -21,6 +21,7 @@ class AppointmentViewModel: ObservableObject {
     init() {
         self.appointment = NewAppointment()
         loadDietitians()
+        setDefaultTimes()
     }
     
     func loadDietitians() {
@@ -68,7 +69,11 @@ class AppointmentViewModel: ObservableObject {
     }
 
     func fetchAvailableTimes() {
-        guard let dietitian = appointment.selectedDietitian?.name else { return }
+        guard let dietitian = appointment.selectedDietitian?.name else { 
+            // Eğer diyetisyen seçilmemişse default saatleri göster
+            setDefaultTimes()
+            return 
+        }
         
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
@@ -76,11 +81,13 @@ class AppointmentViewModel: ObservableObject {
         
         guard let token = UserDefaults.standard.string(forKey: "user_token") else {
             errorMessage = "Token bulunamadı"
+            setDefaultTimes()
             return
         }
         
         guard let url = URL(string: "\(baseURL)/available?dietitian=\(dietitian.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&date=\(dateString)") else { 
             errorMessage = "Geçersiz URL"
+            setDefaultTimes()
             return 
         }
         
@@ -93,22 +100,38 @@ class AppointmentViewModel: ObservableObject {
             DispatchQueue.main.async {
                 if let error = error {
                     self?.errorMessage = "Network hatası: \(error.localizedDescription)"
+                    self?.setDefaultTimes()
                     return
                 }
                 
                 guard let data = data else {
                     self?.errorMessage = "Veri alınamadı"
+                    self?.setDefaultTimes()
                     return
                 }
                 
                 do {
                     let result = try JSONDecoder().decode(AvailableTimesResponse.self, from: data)
-                    self?.times = result.available
+                    if result.available.isEmpty {
+                        self?.setDefaultTimes()
+                    } else {
+                        self?.times = result.available
+                    }
                 } catch {
-                    self?.errorMessage = "Saatler alınamadı: \(error)"
+                    print("API'dan saat alınamadı: \(error), default saatler kullanılacak")
+                    self?.setDefaultTimes()
                 }
             }
         }.resume()
+    }
+    
+    private func setDefaultTimes() {
+        // Varsayılan çalışma saatleri
+        times = [
+            "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+            "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
+            "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"
+        ]
     }
 
     func confirmAppointment() {
