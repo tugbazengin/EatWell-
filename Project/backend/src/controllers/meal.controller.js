@@ -12,7 +12,17 @@ const getTestMealsData = () => {
         
         const mealsData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
         console.log('✅ JSON başarıyla okundu, yemek sayısı:', mealsData.length);
-        return mealsData;
+        
+        // Her meal'e _id ekle (Swift modeli _id bekliyor)
+        const mealsWithId = mealsData.map((meal, index) => ({
+            _id: `test_meal_${index + 1}`,
+            ...meal,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        }));
+        
+        console.log('✅ IDler eklendi, ornek meal:', mealsWithId[0]);
+        return mealsWithId;
     } catch (error) {
         console.error('❌ Test data okuma hatası:', error);
         console.error('❌ Hata detayı:', error.message);
@@ -145,7 +155,7 @@ const getAllMeals = async (req, res) => {
             
         const total = await Meal.countDocuments(query);
         
-        return response(res, 200, true, 'Yemekler başarıyla getirildi', {
+        return new response({
             meals,
             pagination: {
                 current: parseInt(page),
@@ -153,11 +163,11 @@ const getAllMeals = async (req, res) => {
                 count: meals.length,
                 totalItems: total
             }
-        });
+        }, 'Yemekler başarıyla getirildi', 200).success(res);
         
     } catch (error) {
         console.error('getAllMeals error:', error);
-        return response(res, 500, false, 'Yemekler getirilirken hata oluştu');
+        return new response(null, 'Yemekler getirilirken hata oluştu: ' + error.message, 500).errror500(res);
     }
 };
 
@@ -175,11 +185,11 @@ const getMealsByCategory = async (req, res) => {
             mealsByCategory[category] = meals;
         }
         
-        return response(res, 200, true, 'Kategoriye göre yemekler getirildi', mealsByCategory);
+        return new response(mealsByCategory, 'Kategoriye göre yemekler getirildi', 200).success(res);
         
     } catch (error) {
         console.error('getMealsByCategory error:', error);
-        return response(res, 500, false, 'Kategoriye göre yemekler getirilirken hata oluştu');
+        return new response(null, 'Kategoriye göre yemekler getirilirken hata oluştu: ' + error.message, 500).errror500(res);
     }
 };
 
@@ -191,14 +201,14 @@ const getMealById = async (req, res) => {
         const meal = await Meal.findById(id);
         
         if (!meal) {
-            return response(res, 404, false, 'Yemek bulunamadı');
+            return new response(null, 'Yemek bulunamadı', 404).errror404(res);
         }
         
-        return response(res, 200, true, 'Yemek başarıyla getirildi', meal);
+        return new response(meal, 'Yemek başarıyla getirildi', 200).success(res);
         
     } catch (error) {
         console.error('getMealById error:', error);
-        return response(res, 500, false, 'Yemek getirilirken hata oluştu');
+        return new response(null, 'Yemek getirilirken hata oluştu: ' + error.message, 500).errror500(res);
     }
 };
 
@@ -208,7 +218,7 @@ const suggestMeals = async (req, res) => {
         const { targetCalories, category, excludeIds = [] } = req.query;
         
         if (!targetCalories) {
-            return response(res, 400, false, 'Hedef kalori belirtilmeli');
+            return new response(null, 'Hedef kalori belirtilmeli', 400).errror400(res);
         }
         
         const calories = parseInt(targetCalories);
@@ -233,11 +243,11 @@ const suggestMeals = async (req, res) => {
             .limit(5)
             .sort({ calories: 1 });
         
-        return response(res, 200, true, 'Yemek önerileri getirildi', suggestions);
+        return new response(suggestions, 'Yemek önerileri getirildi', 200).success(res);
         
     } catch (error) {
         console.error('suggestMeals error:', error);
-        return response(res, 500, false, 'Yemek önerileri getirilirken hata oluştu');
+        return new response(null, 'Yemek önerileri getirilirken hata oluştu: ' + error.message, 500).errror500(res);
     }
 };
 
@@ -256,11 +266,11 @@ const getRandomMeals = async (req, res) => {
             { $sample: { size: parseInt(count) } }
         ]);
         
-        return response(res, 200, true, 'Rastgele yemekler getirildi', randomMeals);
+        return new response(randomMeals, 'Rastgele yemekler getirildi', 200).success(res);
         
     } catch (error) {
         console.error('getRandomMeals error:', error);
-        return response(res, 500, false, 'Rastgele yemekler getirilirken hata oluştu');
+        return new response(null, 'Rastgele yemekler getirilirken hata oluştu: ' + error.message, 500).errror500(res);
     }
 };
 
@@ -270,7 +280,7 @@ const calculateNutrition = async (req, res) => {
         const { mealIds } = req.body; // Array of meal IDs with quantities
         
         if (!mealIds || !Array.isArray(mealIds)) {
-            return response(res, 400, false, 'Yemek ID\'leri gerekli');
+            return new response(null, 'Yemek ID\'leri gerekli', 400).errror400(res);
         }
         
         let totalNutrition = {
@@ -300,7 +310,7 @@ const calculateNutrition = async (req, res) => {
             }
         }
         
-        return response(res, 200, true, 'Besin değeri hesaplandı', {
+        return new response({
             meals: mealsWithQuantity,
             totalNutrition: {
                 ...totalNutrition,
@@ -309,11 +319,11 @@ const calculateNutrition = async (req, res) => {
                 carbs: Math.round(totalNutrition.carbs * 10) / 10,
                 fat: Math.round(totalNutrition.fat * 10) / 10
             }
-        });
+        }, 'Besin değeri hesaplandı', 200).success(res);
         
     } catch (error) {
         console.error('calculateNutrition error:', error);
-        return response(res, 500, false, 'Besin değeri hesaplanırken hata oluştu');
+        return new response(null, 'Besin değeri hesaplanırken hata oluştu: ' + error.message, 500).errror500(res);
     }
 };
 

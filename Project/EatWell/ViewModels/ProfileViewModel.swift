@@ -11,6 +11,7 @@ class ProfileViewModel: ObservableObject {
     @Published var profile: UserProfile
     @Published var isEditing: Bool
     @Published var showDeleteConfirmation: Bool
+    @Published var showLogoutConfirmation: Bool = false
     @Published var navigateToAuth: Bool
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
@@ -76,6 +77,10 @@ class ProfileViewModel: ObservableObject {
         let deficitCalories = (profile.weight - profile.targetWeight) * 7700 / 30
         let dailyCalorieIntake = max(1200, bmr - deficitCalories)
         profile.dailyCalories = String(format: "%.0f", dailyCalorieIntake)
+        
+        // Günlük kalori ihtiyacını UserDefaults'a kaydet
+        UserDefaults.standard.set(Int(dailyCalorieIntake), forKey: "dailyCalorieLimit")
+        UserDefaults.standard.synchronize()
     }
     
     func calculateDailyWaterIntake() {
@@ -144,6 +149,20 @@ class ProfileViewModel: ObservableObject {
                 }
             }
         }.resume()
+    }
+
+    func logout() {
+        print("🚪 Çıkış işlemi başlatılıyor...")
+        
+        // Kullanıcı verilerini temizle
+        UserDefaults.standard.removeObject(forKey: "user_token")
+        UserDefaults.standard.removeObject(forKey: "isLoggedIn")
+        UserDefaults.standard.synchronize()
+        
+        print("✅ Çıkış başarıyla tamamlandı!")
+        
+        // Auth ekranına yönlendir
+        navigateToAuth = true
     }
 
     func deleteProfile() {

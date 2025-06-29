@@ -15,33 +15,48 @@ struct SplashView: View {
             Color.green.opacity(0.8)
                 .edgesIgnoringSafeArea(.all)
             
-            VStack {
-                HStack(spacing: 0) {
+            VStack(spacing: 20) {
+                // Ana başlık
+                HStack(spacing: 2) {
                     ForEach(Array(viewModel.title.enumerated()), id: \.offset) { index, letter in
                         Text(String(letter))
                             .font(.system(size: 50, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
-                            .opacity(viewModel.showText ? 1 : 0)
-                            .offset(y: viewModel.showText ? 0 : 20)
-                            .animation(.spring().delay(0.1 * Double(index)), value: viewModel.showText)
+                            .scaleEffect(viewModel.showText ? 1.0 : 0.5)
+                            .opacity(viewModel.showText ? 1.0 : 0.0)
+                            .animation(
+                                .spring(response: 0.6, dampingFraction: 0.8)
+                                .delay(Double(index) * 0.1),
+                                value: viewModel.showText
+                            )
                     }
                 }
                 
+                // Slogan
                 if viewModel.showSlogan {
-Text(viewModel.slogan)
+                    Text(viewModel.slogan)
                         .font(.title2)
+                        .fontWeight(.medium)
                         .foregroundColor(.white)
-                        .padding(.top, 10)
-                        .transition(.opacity)
-                        .animation(.easeIn(duration: 1), value: viewModel.showSlogan)
+                        .multilineTextAlignment(.center)
+                        .opacity(viewModel.showSlogan ? 1.0 : 0.0)
+                        .scaleEffect(viewModel.showSlogan ? 1.0 : 0.8)
+                        .animation(.easeOut(duration: 0.8), value: viewModel.showSlogan)
                 }
                 
+                // Loading indicator
                 if viewModel.showLoading {
-                    Text("⏳")
-                        .font(.system(size: 40))
-                        .padding(.top, 20)
-                        .transition(.opacity)
-                        .animation(.easeIn(duration: 0.5), value: viewModel.showLoading)
+                    VStack(spacing: 8) {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(1.2)
+                        
+                        Text("Yükleniyor...")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                    .opacity(viewModel.showLoading ? 1.0 : 0.0)
+                    .animation(.easeIn(duration: 0.5), value: viewModel.showLoading)
                 }
             }
         }

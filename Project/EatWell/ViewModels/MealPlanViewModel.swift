@@ -23,8 +23,11 @@ final class MealPlanViewModel: ObservableObject {
     @Published var showError = false
     @Published var calorieWarning: String = ""
     @Published var showCalorieWarning = false
+    @Published var showSaveSuccess = false
+    @Published var isSaved = false
     
     private let baseURL = APIConfig.generalURL
+    private let currentDate = Date()
     
     // Kategoriler
     let categories = ["Kahvaltı", "Öğle Yemeği", "Akşam Yemeği", "Atıştırmalık", "Çorba", "Tatlı"]
@@ -33,6 +36,18 @@ final class MealPlanViewModel: ObservableObject {
     init() {
         // Direkt API'den veri çek, sample data yükleme
         fetchMeals()
+        
+        // Kaydedilmiş planı yükle (tarih kontrolü ile)
+        loadSavedMealPlan()
+        
+        // Profil güncellendiğinde kalori sınırını yeniden hesapla
+        NotificationCenter.default.addObserver(
+            forName: .profileUpdated,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.checkCalorieLimit()
+        }
     }
     
     // MARK: - Sample Data (Backup)
@@ -103,21 +118,24 @@ final class MealPlanViewModel: ObservableObject {
             }
             
             // Response'u parse et
-            let apiResponse = try JSONDecoder().decode(APIResponse.self, from: data)
-            
-            if apiResponse.success {
-                if endpoint.contains("/categories") {
-                    // Kategorilere göre gruplanan veri
-                    return parseCategorizedMeals(from: apiResponse.data)
+            if endpoint.contains("/categories") {
+                // Kategorilere göre gruplanan veri için CategorizedMealsResponse kullan
+                let apiResponse = try JSONDecoder().decode(CategorizedMealsResponse.self, from: data)
+                
+                if apiResponse.success {
+                    return processCategorizedMeals(from: apiResponse.data)
                 } else {
-                    // Düz liste
-                    if let mealsData = apiResponse.data,
-                       let meals = mealsData["meals"] as? [[String: Any]] {
-                        return parseMealsArray(from: meals)
-                    }
+                    print("❌ API başarısız: \(apiResponse.message)")
                 }
             } else {
-                print("❌ API başarısız: \(apiResponse.message)")
+                // Düz liste için MealsListResponse kullan
+                let apiResponse = try JSONDecoder().decode(MealsListResponse.self, from: data)
+                
+                if apiResponse.success {
+                    return apiResponse.data.meals
+                } else {
+                    print("❌ API başarısız: \(apiResponse.message)")
+                }
             }
             
         } catch {
@@ -127,74 +145,25 @@ final class MealPlanViewModel: ObservableObject {
         return []
     }
     
-    private func parseCategorizedMeals(from data: [String: Any]?) -> [Meal] {
-        guard let categorizedData = data as? [String: [[String: Any]]] else {
-            print("❌ Kategori verisi parse edilemedi")
-            return []
+    private func processCategorizedMeals(from categoryData: [String: [Meal]]) -> [Meal] {
+        var allMeals: [Meal] = []
+        
+        // Kategorileri güncelle
+        DispatchQueue.main.async {
+            self.mealsByCategory = categoryData
+            print("✅ mealsByCategory güncellendi: \(self.mealsByCategory.mapValues { $0.count })")
         }
         
-        var allMeals: [Meal] = []
-        var categoryGroups: [String: [Meal]] = [:]
-        
-        for (category, mealsData) in categorizedData {
-            let meals = parseMealsArray(from: mealsData)
+        // Tüm yemekleri birleştir
+        for (category, meals) in categoryData {
             allMeals.append(contentsOf: meals)
-            categoryGroups[category] = meals
             print("🍽️ \(category): \(meals.count) yemek yüklendi")
         }
         
         print("📊 Toplam yemek sayısı: \(allMeals.count)")
-        print("📋 Kategoriler: \(categoryGroups.keys)")
-        
-        // Kategorileri güncelle
-        DispatchQueue.main.async {
-            self.mealsByCategory = categoryGroups
-            print("✅ mealsByCategory güncellendi: \(self.mealsByCategory.mapValues { $0.count })")
-        }
+        print("📋 Kategoriler: \(categoryData.keys)")
         
         return allMeals
-    }
-    
-    private func parseMealsArray(from mealsData: [[String: Any]]) -> [Meal] {
-        var meals: [Meal] = []
-        
-        for mealDict in mealsData {
-            if let meal = parseSingleMeal(from: mealDict) {
-                meals.append(meal)
-            }
-        }
-        
-        return meals
-    }
-    
-    private func parseSingleMeal(from dict: [String: Any]) -> Meal? {
-        guard let name = dict["name"] as? String,
-              let category = dict["category"] as? String,
-              let calories = dict["calories"] as? Int,
-              let protein = dict["protein"] as? Double,
-              let carbs = dict["carbs"] as? Double,
-              let fat = dict["fat"] as? Double,
-              let description = dict["description"] as? String,
-              let ingredients = dict["ingredients"] as? [String],
-              let preparationTime = dict["preparationTime"] as? Int else {
-            print("❌ Yemek parse hatası: \(dict)")
-            return nil
-        }
-        
-        let id = dict["_id"] as? String ?? UUID().uuidString
-        
-        return Meal(
-            id: id,
-            name: name,
-            category: category,
-            calories: calories,
-            protein: protein,
-            carbs: carbs,
-            fat: fat,
-            description: description,
-            ingredients: ingredients,
-            preparationTime: preparationTime
-        )
     }
     
     private func groupMealsByCategory() {
@@ -213,6 +182,7 @@ final class MealPlanViewModel: ObservableObject {
             selectedMeals[category]?.append(meal)
             calculateDailyNutrition()
             checkCalorieLimit()
+            isSaved = false // Plan değişti, kaydedilmemiş oldu
         }
     }
     
@@ -220,6 +190,7 @@ final class MealPlanViewModel: ObservableObject {
         selectedMeals[category]?.removeAll { $0.id == meal.id }
         calculateDailyNutrition()
         checkCalorieLimit()
+        isSaved = false // Plan değişti, kaydedilmemiş oldu
     }
     
     func clearMealPlan() {
@@ -227,6 +198,7 @@ final class MealPlanViewModel: ObservableObject {
             selectedMeals[category] = []
         }
         dailyNutrition = DailyNutrition()
+        isSaved = false
     }
     
     // MARK: - Nutrition Calculation
@@ -310,6 +282,95 @@ final class MealPlanViewModel: ObservableObject {
         }
     }
     
+    // MARK: - Meal Plan Persistence
+    func saveMealPlan() {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let todayString = dateFormatter.string(from: currentDate)
+        
+        // Seçilen yemekleri UserDefaults'a kaydet
+        do {
+            let encoder = JSONEncoder()
+            let selectedMealsData = try encoder.encode(selectedMeals)
+            let nutritionData = try encoder.encode(dailyNutrition)
+            
+            UserDefaults.standard.set(selectedMealsData, forKey: "savedMealPlan_\(todayString)")
+            UserDefaults.standard.set(nutritionData, forKey: "savedNutrition_\(todayString)")
+            UserDefaults.standard.set(todayString, forKey: "lastSavedPlanDate")
+            UserDefaults.standard.synchronize()
+            
+            print("✅ Beslenme planı kaydedildi: \(todayString)")
+            
+            isSaved = true
+            showSaveSuccess = true
+            
+            // 3 saniye sonra success mesajını gizle
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                self.showSaveSuccess = false
+            }
+            
+        } catch {
+            print("❌ Beslenme planı kaydetme hatası: \(error)")
+            handleError("Beslenme planı kaydedilemedi")
+        }
+    }
+    
+    private func loadSavedMealPlan() {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let todayString = dateFormatter.string(from: currentDate)
+        
+        // Kaydedilen tarihi kontrol et
+        let lastSavedDate = UserDefaults.standard.string(forKey: "lastSavedPlanDate")
+        
+        // Bugünkü tarih ile aynı değilse planı sıfırla
+        if lastSavedDate != todayString {
+            print("📅 Tarih değişmiş (\(lastSavedDate ?? "yok") -> \(todayString)), plan sıfırlanıyor")
+            clearMealPlan()
+            isSaved = false
+            return
+        }
+        
+        // Kaydedilen planı yükle
+        if let savedMealsData = UserDefaults.standard.data(forKey: "savedMealPlan_\(todayString)"),
+           let savedNutritionData = UserDefaults.standard.data(forKey: "savedNutrition_\(todayString)") {
+            
+            do {
+                let decoder = JSONDecoder()
+                let loadedMeals = try decoder.decode([String: [Meal]].self, from: savedMealsData)
+                let loadedNutrition = try decoder.decode(DailyNutrition.self, from: savedNutritionData)
+                
+                self.selectedMeals = loadedMeals
+                self.dailyNutrition = loadedNutrition
+                self.isSaved = true
+                
+                print("✅ Kaydedilmiş beslenme planı yüklendi: \(todayString)")
+                
+            } catch {
+                print("❌ Kaydedilmiş plan yükleme hatası: \(error)")
+                clearMealPlan()
+                isSaved = false
+            }
+        } else {
+            print("📝 Bugün için kaydedilmiş plan bulunamadı")
+            isSaved = false
+        }
+    }
+    
+    func deleteSavedMealPlan() {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let todayString = dateFormatter.string(from: currentDate)
+        
+        UserDefaults.standard.removeObject(forKey: "savedMealPlan_\(todayString)")
+        UserDefaults.standard.removeObject(forKey: "savedNutrition_\(todayString)")
+        UserDefaults.standard.removeObject(forKey: "lastSavedPlanDate")
+        UserDefaults.standard.synchronize()
+        
+        isSaved = false
+        print("🗑️ Kaydedilmiş beslenme planı silindi")
+    }
+    
     // MARK: - Error Handling
     private func handleError(_ message: String) {
         errorMessage = message
@@ -323,28 +384,20 @@ final class MealPlanViewModel: ObservableObject {
 }
 
 // MARK: - Supporting Models
-struct JSONKeys: CodingKey {
-    var stringValue: String
-    var intValue: Int?
-    
-    init?(stringValue: String) {
-        self.stringValue = stringValue
-        self.intValue = nil
-    }
-    
-    init?(intValue: Int) {
-        self.stringValue = String(intValue)
-        self.intValue = intValue
-    }
-}
 
-struct DailyNutrition {
+struct DailyNutrition: Codable {
     var calories: Int = 0
     var protein: Double = 0.0
     var carbs: Double = 0.0
     var fat: Double = 0.0
     var preparationTime: Int = 0
-    var dailyCalorieLimit: Int = 2000 // Varsayılan günlük kalori hedefi
+    
+    // Kullanıcının gerçek günlük kalori ihtiyacını al
+    var dailyCalorieLimit: Int {
+        return UserDefaults.standard.integer(forKey: "dailyCalorieLimit") > 0 
+            ? UserDefaults.standard.integer(forKey: "dailyCalorieLimit") 
+            : 2000 // Varsayılan değer
+    }
     
     var formattedProtein: String {
         return String(format: "%.1f", protein)
@@ -391,37 +444,27 @@ struct DailyNutrition {
     }
 }
 
-struct APIResponse: Decodable {
+// MARK: - API Response Models
+struct CategorizedMealsResponse: Codable {
     let success: Bool
     let message: String
-    let data: [String: Any]?
-    
-    enum CodingKeys: String, CodingKey {
-        case success, message, data
-    }
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        success = try container.decode(Bool.self, forKey: .success)
-        message = try container.decode(String.self, forKey: .message)
-        
-        // data alanını [String: Any] olarak decode et
-        if container.contains(.data) {
-            let dataContainer = try container.nestedContainer(keyedBy: JSONKeys.self, forKey: .data)
-            var dataDict: [String: Any] = [:]
-            
-            for key in dataContainer.allKeys {
-                if let stringValue = try? dataContainer.decode(String.self, forKey: key) {
-                    dataDict[key.stringValue] = stringValue
-                } else if let intValue = try? dataContainer.decode(Int.self, forKey: key) {
-                    dataDict[key.stringValue] = intValue
-                } else if let arrayValue = try? dataContainer.decode([[String: String]].self, forKey: key) {
-                    dataDict[key.stringValue] = arrayValue
-                }
-            }
-            data = dataDict.isEmpty ? nil : dataDict
-        } else {
-            data = nil
-        }
-    }
+    let data: [String: [Meal]]
+}
+
+struct MealsListResponse: Codable {
+    let success: Bool
+    let message: String
+    let data: MealsData
+}
+
+struct MealsData: Codable {
+    let meals: [Meal]
+    let pagination: Pagination?
+}
+
+struct Pagination: Codable {
+    let current: Int
+    let total: Int
+    let count: Int
+    let totalItems: Int
 }

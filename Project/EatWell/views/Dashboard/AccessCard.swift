@@ -11,21 +11,27 @@ struct AccessCard: View {
     let title: String
 
     var body: some View {
-        VStack {
+        VStack(spacing: 12) {
             Image(systemName: icon)
-                .font(.appHeadline)
-                .foregroundColor(Color.green)
+                .font(.system(size: 28, weight: .bold))
+                .foregroundColor(.green)
+            
             Text(title)
-                .font(.appBody)
+                .font(.appHeadline)
+                .fontWeight(.semibold)
                 .foregroundColor(.primary)
+                .multilineTextAlignment(.center)
         }
-        .padding()
-        .frame(maxWidth: .infinity, minHeight: 80)
+        .padding(16)
+        .frame(maxWidth: .infinity, minHeight: 100)
         .background(
-            RoundedRectangle(cornerRadius: 15)
-                .fill(Color.white)
-                .shadow(color: Color.gray.opacity(0.3), radius: 10, x: 5, y: 5)
-                .shadow(color: Color.white, radius: 10, x: -5, y: -5)
+            RoundedRectangle(cornerRadius: 18)
+                .fill(.white)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18)
+                        .stroke(Color.green.opacity(0.2), lineWidth: 1)
+                )
+                .shadow(color: .green.opacity(0.15), radius: 8, x: 0, y: 4)
         )
     }
 }

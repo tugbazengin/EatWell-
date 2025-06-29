@@ -69,106 +69,31 @@ struct ProfileView: View {
         NavigationStack {
             BaseView(title: "Profil") {
                 ScrollView {
-                    VStack(spacing: 20) {
-                        Image(systemName: "person.circle.fill")
-                            .resizable()
-                            .frame(width: 120, height: 120)
-                            .foregroundColor(.gray)
-                            .padding(.top)
-
-                        VStack(alignment: .leading, spacing: 15) {
-                            ProfileRow(label: "Ad Soyad", value: $viewModel.profile.fullName, isEditing: viewModel.isEditing)
-                            ProfileRow(label: "Yaş", value: ageBinding, isEditing: viewModel.isEditing, keyboardType: .numberPad)
-                            ProfileRow(label: "Boy (cm)", value: heightBinding, isEditing: viewModel.isEditing, keyboardType: .decimalPad)
-                            ProfileRow(label: "Kilo (kg)", value: weightBinding, isEditing: viewModel.isEditing, keyboardType: .decimalPad)
-                            ProfileRow(label: "Telefon", value: $viewModel.profile.phoneNumber, isEditing: viewModel.isEditing, keyboardType: .phonePad)
-                            ProfileRow(label: "Hedef Kilo", value: targetWeightBinding, isEditing: viewModel.isEditing, keyboardType: .decimalPad)
-                        }
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 15)
-                                .fill(Color.white.opacity(0.9))
-                                .shadow(color: Color.gray.opacity(0.25), radius: 6, x: 3, y: 3)
-                        )
-                        .padding(.horizontal)
-
-                        VStack(spacing: 15) {
-                            ProfileInfoCard(title: "Vücut Kitle Endeksi", value: viewModel.profile.bmi ?? "-", icon: "chart.bar.fill", color: .purple)
-                            ProfileInfoCard(title: "Günlük Kalori İhtiyacı", value: "\(viewModel.profile.dailyCalories ?? "0") kcal", icon: "flame.fill", color: .red)
-                            ProfileInfoCard(title: "Günlük Su Tüketimi", value: "\(viewModel.profile.dailyWaterIntake ?? "0.00") L", icon: "drop.fill", color: .blue)
-                        }
-                        .padding(.horizontal)
-
-                        Spacer(minLength: 40)
+                    VStack(spacing: 30) {
+                        profileHeaderSection
+                        personalInfoSection
+                        healthMetricsSection
+                        Spacer(minLength: 80)
                     }
                 }
                 .onAppear {
                     viewModel.fetchProfile()
                 }
-                .overlay(
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            Button(action: { 
-                                if viewModel.isEditing {
-                                    // Düzenleme modundan çıkılırken profili kaydet
-                                    viewModel.updateProfile()
-                                }
-                                viewModel.isEditing.toggle() 
-                            }) {
-                                ZStack {
-                                    if viewModel.isLoading {
-                                        ProgressView()
-                                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                            .frame(width: 36, height: 36)
-                                    } else {
-                                        Image(systemName: viewModel.isEditing ? "checkmark.circle.fill" : "pencil.circle.fill")
-                                            .resizable()
-                                            .frame(width: 36, height: 36)
-                                            .foregroundColor(viewModel.isEditing ? .green : .black)
-                                    }
-                                }
-                                .background(
-                                    Circle()
-                                        .fill(viewModel.isLoading ? Color.blue : Color.clear)
-                                        .frame(width: 44, height: 44)
-                                )
-                                .shadow(radius: 4)
-                            }
-                            .disabled(viewModel.isLoading)
-                        }
-                        .padding()
-                    }
-                )
-                .overlay(
-                    // Success Toast
-                    VStack {
-                        if viewModel.showSuccessMessage {
-                            HStack {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.green)
-                                Text("Profil başarıyla güncellendi!")
-                                    .font(.appBody)
-                                    .foregroundColor(.white)
-                            }
-                            .padding()
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.black.opacity(0.8))
-                            )
-                            .transition(.move(edge: .top).combined(with: .opacity))
-                            .animation(.spring(), value: viewModel.showSuccessMessage)
-                        }
-                        Spacer()
-                    }
-                    .padding(.top, 60)
-                )
+                .overlay(editButtonOverlay)
+                .overlay(successToastOverlay)
                 .alert(isPresented: $viewModel.showDeleteConfirmation) {
                     Alert(
                         title: Text("Profil Silinsin Mi?"),
                         message: Text("Bu işlemi geri alamazsınız."),
                         primaryButton: .destructive(Text("Evet"), action: viewModel.deleteProfile),
+                        secondaryButton: .cancel(Text("Hayır"))
+                    )
+                }
+                .alert(isPresented: $viewModel.showLogoutConfirmation) {
+                    Alert(
+                        title: Text("Çıkış Yap"),
+                        message: Text("Çıkış yapmak istediğinize emin misiniz?"),
+                        primaryButton: .default(Text("Evet"), action: viewModel.logout),
                         secondaryButton: .cancel(Text("Hayır"))
                     )
                 }
@@ -188,7 +113,7 @@ struct ProfileView: View {
                             .font(.title2)
                             .foregroundColor(.red)
                     }
-                    Button(action: { viewModel.navigateToAuth = true }) {
+                    Button(action: { viewModel.showLogoutConfirmation = true }) {
                         Image(systemName: "rectangle.portrait.and.arrow.forward")
                             .font(.title2)
                             .foregroundColor(.blue)
@@ -196,5 +121,240 @@ struct ProfileView: View {
                 }
             }
         }
+    }
+    
+    // MARK: - Profile Header Section
+    private var profileHeaderSection: some View {
+        VStack(spacing: 20) {
+            // Profile Avatar with enhanced styling
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color.green.opacity(0.8),
+                                Color.green.opacity(0.6)
+                            ]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 130, height: 130)
+                    .shadow(color: .green.opacity(0.3), radius: 10, x: 0, y: 5)
+                
+                Image(systemName: "person.fill")
+                    .font(.system(size: 60, weight: .semibold))
+                    .foregroundColor(.white)
+            }
+            .padding(.top, 20)
+            
+            // User name display
+            Text(viewModel.profile.fullName.isEmpty ? "Kullanıcı" : viewModel.profile.fullName)
+                .font(.appTitle3)
+                .fontWeight(.bold)
+                .foregroundColor(.black)
+        }
+        .padding(.bottom, 10)
+    }
+    
+    // MARK: - Personal Information Section
+    private var personalInfoSection: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Image(systemName: "person.text.rectangle")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.green)
+                Text("Kişisel Bilgiler")
+                    .font(.appTitle3)
+                    .fontWeight(.bold)
+                    .foregroundColor(.black)
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            
+            VStack(spacing: 12) {
+                profileDataFields
+            }
+            .padding(20)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(.white)
+                    .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
+            )
+            .padding(.horizontal, 20)
+        }
+    }
+    
+    // MARK: - Profile Data Fields
+    private var profileDataFields: some View {
+        Group {
+            ModernProfileRow(
+                icon: "person.fill",
+                label: "Ad Soyad",
+                value: $viewModel.profile.fullName,
+                isEditing: viewModel.isEditing,
+                color: .green
+            )
+            
+            ModernProfileRow(
+                icon: "calendar",
+                label: "Yaş",
+                value: ageBinding,
+                isEditing: viewModel.isEditing,
+                keyboardType: .numberPad,
+                color: .blue
+            )
+            
+            ModernProfileRow(
+                icon: "arrow.up.and.down",
+                label: "Boy (cm)",
+                value: heightBinding,
+                isEditing: viewModel.isEditing,
+                keyboardType: .decimalPad,
+                color: .orange
+            )
+            
+            ModernProfileRow(
+                icon: "scalemass",
+                label: "Kilo (kg)",
+                value: weightBinding,
+                isEditing: viewModel.isEditing,
+                keyboardType: .decimalPad,
+                color: .green
+            )
+            
+            ModernProfileRow(
+                icon: "phone.fill",
+                label: "Telefon",
+                value: $viewModel.profile.phoneNumber,
+                isEditing: viewModel.isEditing,
+                keyboardType: .phonePad,
+                color: .blue
+            )
+            
+            ModernProfileRow(
+                icon: "target",
+                label: "Hedef Kilo",
+                value: targetWeightBinding,
+                isEditing: viewModel.isEditing,
+                keyboardType: .decimalPad,
+                color: .orange
+            )
+        }
+    }
+    
+    // MARK: - Health Metrics Section
+    private var healthMetricsSection: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Image(systemName: "heart.text.square")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.orange)
+                Text("Sağlık Metrikleri")
+                    .font(.appTitle3)
+                    .fontWeight(.bold)
+                    .foregroundColor(.black)
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            
+            VStack(spacing: 12) {
+                healthMetricCards
+            }
+            .padding(.horizontal, 20)
+        }
+    }
+    
+    // MARK: - Health Metric Cards
+    private var healthMetricCards: some View {
+        Group {
+            ModernProfileInfoCard(
+                title: "Vücut Kitle Endeksi",
+                value: viewModel.profile.bmi ?? "-",
+                icon: "chart.bar.fill",
+                gradientColors: [Color.green.opacity(0.8), Color.green.opacity(0.6)]
+            )
+            
+            ModernProfileInfoCard(
+                title: "Günlük Kalori İhtiyacı",
+                value: "\(viewModel.profile.dailyCalories ?? "0") kcal",
+                icon: "flame.fill",
+                gradientColors: [Color.orange.opacity(0.8), Color.orange.opacity(0.6)]
+            )
+            
+            ModernProfileInfoCard(
+                title: "Günlük Su Tüketimi",
+                value: "\(viewModel.profile.dailyWaterIntake ?? "0.00") L",
+                icon: "drop.fill",
+                gradientColors: [Color.blue.opacity(0.8), Color.blue.opacity(0.6)]
+            )
+        }
+    }
+    
+    // MARK: - Edit Button Overlay
+    private var editButtonOverlay: some View {
+        VStack {
+            Spacer()
+            HStack {
+                Spacer()
+                Button(action: { 
+                    if viewModel.isEditing {
+                        viewModel.updateProfile()
+                    }
+                    viewModel.isEditing.toggle() 
+                }) {
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    gradient: Gradient(colors: viewModel.isEditing ? 
+                                        [Color.green.opacity(0.8), Color.green.opacity(0.6)] :
+                                        [Color.blue.opacity(0.8), Color.blue.opacity(0.6)]
+                                    ),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 60, height: 60)
+                            .shadow(color: (viewModel.isEditing ? Color.green : Color.blue).opacity(0.3), radius: 8, x: 0, y: 4)
+                        
+                        if viewModel.isLoading {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        } else {
+                            Image(systemName: viewModel.isEditing ? "checkmark" : "pencil")
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                    }
+                }
+                .disabled(viewModel.isLoading)
+            }
+            .padding(20)
+        }
+    }
+    
+    // MARK: - Success Toast Overlay
+    private var successToastOverlay: some View {
+        VStack {
+            if viewModel.showSuccessMessage {
+                HStack {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                    Text("Profil başarıyla güncellendi!")
+                        .font(.appBody)
+                        .foregroundColor(.white)
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.black.opacity(0.8))
+                )
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .animation(.spring(), value: viewModel.showSuccessMessage)
+            }
+            Spacer()
+        }
+        .padding(.top, 60)
     }
 }

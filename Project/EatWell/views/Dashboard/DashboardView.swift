@@ -12,49 +12,105 @@ struct DashboardView: View {
     var body: some View {
         NavigationStack {
             BaseView(showsScrollView: true) {
+                VStack(spacing: 0) {
+                    // Header Section with gradient background
                 VStack(spacing: 20) {
-                    Spacer(minLength: 30)
+                        Spacer(minLength: 20)
 
-                    Text("Hoşgeldin, \(viewModel.userName)")
+                        // Welcome text with enhanced styling
+                        VStack(spacing: 8) {
+                            Text("Hoşgeldin")
+                                .font(.appBody)
+                                .foregroundColor(.black.opacity(0.7))
+                            
+                            Text(viewModel.userName)
                         .font(.appTitle)
+                                .fontWeight(.bold)
                         .foregroundColor(.black)
-                        .padding(.top, 5)
+                        }
+                        .padding(.top, 10)
 
-                    VStack(spacing: 16) {
-                        InfoBox(text: "Günlük Kalori: \(viewModel.dailyCalories)", color: .orange)
-                        InfoBox(text: "Vücut Kitle Endeksi: \(viewModel.bmi)", color: .green)
-                        InfoBox(text: "Su Tüketimi: \(viewModel.waterIntake)", color: .blue)
+                        // Stats cards with modern design
+                        HStack(spacing: 12) {
+                            StatCard(
+                                icon: "flame.fill",
+                                title: "Kalori",
+                                value: "\(viewModel.dailyCalories)",
+                                color: .orange,
+                                gradientColors: [Color.orange.opacity(0.8), Color.orange.opacity(0.6)]
+                            )
+                            
+                            StatCard(
+                                icon: "figure.walk",
+                                title: "BMI",
+                                value: "\(viewModel.bmi)",
+                                color: .green,
+                                gradientColors: [Color.green.opacity(0.8), Color.green.opacity(0.6)]
+                            )
+                            
+                            StatCard(
+                                icon: "drop.fill",
+                                title: "Su",
+                                value: "\(viewModel.waterIntake)",
+                                color: .blue,
+                                gradientColors: [Color.blue.opacity(0.8), Color.blue.opacity(0.6)]
+                            )
+                        }
+                        .padding(.horizontal, 20)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 20)
-
-                    VStack(spacing: 10) {
+                    .padding(.bottom, 30)
+                    
+                    // Navigation cards section
+                    VStack(spacing: 16) {
+                        // Main feature card - Meal Plan
                         NavigationLink(destination: MealPlanView()) {
-                            AccessCard(icon: "leaf.fill", title: "Beslenme Planı")
+                            MainFeatureCard(
+                                icon: "leaf.fill",
+                                title: "Beslenme Planı",
+                                subtitle: "Kişiye özel beslenme programın",
+                                gradientColors: [Color.green.opacity(0.8), Color.green.opacity(0.6)]
+                            )
                         }
 
-                        HStack(spacing: 20) {
+                        // Secondary cards in grid
+                        HStack(spacing: 16) {
                             NavigationLink(destination: AppointmentView()) {
-                                AccessCard(icon: "calendar.badge.plus", title: "Randevu Alma")
+                                SecondaryFeatureCard(
+                                    icon: "calendar.badge.plus",
+                                    title: "Randevu Al",
+                                    color: .blue
+                                )
                             }
+                            
                             NavigationLink(destination: AppointmentListView()) {
-                                AccessCard(icon: "calendar", title: "Randevularım")
+                                SecondaryFeatureCard(
+                                    icon: "calendar",
+                                    title: "Randevularım",
+                                    color: .orange
+                                )
                             }
                         }
 
                         NavigationLink(destination: ProfileView()) {
-                            AccessCard(icon: "person.crop.circle", title: "Profil Bilgileri")
+                            SecondaryFeatureCard(
+                                icon: "person.crop.circle.fill",
+                                title: "Profil Bilgileri",
+                                color: .green,
+                                isWide: true
+                            )
                         }
                     }
+                    .padding(.horizontal, 20)
+                    
+                    // Enhanced motivation card
+                    EnhancedMotivationCard(quote: viewModel.motivationQuote)
+                        .padding(.top, 20)
 
-                    MotivationCard(quote: viewModel.motivationQuote)
-
-                    Spacer()
+                    Spacer(minLength: 20)
                 }
             }
             .navigationBarHidden(true)
             .onAppear {
-                // Her görüntülendiğinde dashboard verilerini yenile
                 viewModel.refreshDashboard()
             }
         }

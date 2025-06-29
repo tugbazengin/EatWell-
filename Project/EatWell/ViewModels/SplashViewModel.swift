@@ -19,20 +19,29 @@ final class SplashViewModel: ObservableObject {
     let slogan = "Sağlıklı beslen, mutlu yaşa!"
     
     func startAnimationSequence() {
-        withAnimation {
-            showText = true
+        // İlk animasyon hemen başlasın
+        DispatchQueue.main.async {
+            withAnimation {
+                self.showText = true
+            }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+        
+        // Slogan daha hızlı gelsin
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
             withAnimation {
                 self.showSlogan = true
             }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+        
+        // Loading indicator da daha hızlı
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
             withAnimation {
                 self.showLoading = true
             }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+        
+        // Toplam süreyi kısalttık
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
             self.checkLoginStatus()
         }
     }

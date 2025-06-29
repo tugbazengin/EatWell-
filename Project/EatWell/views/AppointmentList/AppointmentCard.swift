@@ -12,64 +12,127 @@ struct AppointmentCard: View {
     let onCancel: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(spacing: 16) {
+            // Header with doctor name and status
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(appointment.dietitian)
-                        .font(.appHeadline)
-                        .foregroundColor(.black)
-                    
-                    HStack(spacing: 4) {
-                        Image(systemName: "calendar")
-                        Text(appointment.formattedDate)
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "stethoscope")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.blue)
+                        
+                        Text(appointment.dietitian)
+                            .font(.appTitle3)
+                            .fontWeight(.bold)
+                            .foregroundColor(.black)
                     }
-                    .font(.appBody)
-                    .foregroundColor(.secondary)
                     
-                    HStack(spacing: 4) {
-                        Image(systemName: "clock")
-                        Text(appointment.time)
-                    }
-                    .font(.appBody)
-                    .foregroundColor(.secondary)
+                    Text("Diyetisyen")
+                        .font(.appCaption)
+                        .foregroundColor(.blue.opacity(0.7))
                 }
 
                 Spacer()
 
+                // Status badge
+                Text(appointment.statusText)
+                    .font(.appCaption)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(statusColor)
+                    )
+            }
+            
+            // Date and time information
+            HStack(spacing: 20) {
+                // Date section
                 VStack(spacing: 8) {
-                    Text(appointment.statusText)
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundColor(statusColor)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(statusBackgroundColor)
-                        .clipShape(Capsule())
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.green.opacity(0.1))
+                            .frame(width: 60, height: 60)
+                        
+                        VStack(spacing: 2) {
+                            Image(systemName: "calendar")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(.green)
+                            
+                            Text("Tarih")
+                                .font(.system(size: 8, weight: .medium))
+                                .foregroundColor(.green)
+                        }
+                    }
                     
-                    if appointment.status != "cancelled" {
-                        Button(action: onCancel) {
-                            HStack(spacing: 4) {
-                                Image(systemName: "xmark.circle")
-                                Text("İptal Et")
+                    Text(appointment.formattedDate)
+                        .font(.appHeadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.black)
+                        .multilineTextAlignment(.center)
+                }
+                
+                // Time section
+                VStack(spacing: 8) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.orange.opacity(0.1))
+                            .frame(width: 60, height: 60)
+                        
+                        VStack(spacing: 2) {
+                            Image(systemName: "clock")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(.orange)
+                            
+                            Text("Saat")
+                                .font(.system(size: 8, weight: .medium))
+                                .foregroundColor(.orange)
+                        }
+                    }
+                    
+                    Text(appointment.time)
+                        .font(.appTitle3)
+                        .fontWeight(.bold)
+                        .foregroundColor(.black)
+                }
+                
+                Spacer()
+                
+                // Cancel button
+                if appointment.status != "cancelled" {
+                    Button(action: onCancel) {
+                        VStack(spacing: 6) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.red.opacity(0.1))
+                                    .frame(width: 40, height: 40)
+                                
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.red)
                             }
-                            .font(.caption)
-                            .foregroundColor(.red)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.red.opacity(0.1))
-                            .clipShape(Capsule())
+                            
+                            Text("İptal Et")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(.red)
                         }
                     }
                 }
             }
         }
-        .padding()
+        .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+            RoundedRectangle(cornerRadius: 20)
+                .fill(.white)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(statusColor.opacity(0.2), lineWidth: 1)
+                )
+                .shadow(color: statusColor.opacity(0.1), radius: 8, x: 0, y: 4)
         )
-        .padding(.horizontal)
+        .padding(.horizontal, 20)
     }
     
     private var statusColor: Color {
@@ -82,19 +145,6 @@ struct AppointmentCard: View {
             return .red
         default:
             return .gray
-        }
-    }
-    
-    private var statusBackgroundColor: Color {
-        switch appointment.status {
-        case "approved":
-            return Color.green.opacity(0.2)
-        case "pending":
-            return Color.orange.opacity(0.2)
-        case "cancelled":
-            return Color.red.opacity(0.2)
-        default:
-            return Color.gray.opacity(0.2)
         }
     }
 }

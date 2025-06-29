@@ -8,26 +8,33 @@
 import SwiftUI
 
 struct ContentView: View {
-    @AppStorage("isLoggedIn") private var isLoggedIn: Bool = false
-    @State private var showSplash = true
-    
     var body: some View {
-        if showSplash {
-            SplashView()
-                .onAppear {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
-                        withAnimation {
-                            showSplash = false
-                        }
-                    }
+        TabView {
+            DashboardView()
+                .tabItem {
+                    Image(systemName: "house.fill")
+                    Text("Ana Sayfa")
                 }
-        } else {
-            if isLoggedIn {
-                DashboardView() // Kullanıcı giriş yaptıysa Dashboard gösterilir
-            } else {
-                AuthView() // Kullanıcı giriş yapmadıysa AuthView gösterilir
-            }
+            
+            MealPlanView()
+                .tabItem {
+                    Image(systemName: "leaf.fill")
+                    Text("Beslenme")
+                }
+            
+            AppointmentListView()
+                .tabItem {
+                    Image(systemName: "calendar")
+                    Text("Randevular")
+                }
+            
+            ProfileView()
+                .tabItem {
+                    Image(systemName: "person.fill")
+                    Text("Profil")
+                }
         }
+        .accentColor(.green)
     }
 }
 

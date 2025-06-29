@@ -45,7 +45,8 @@ class AppointmentListViewModel: ObservableObject {
 
                 do {
                     let result = try JSONDecoder().decode(MyAppointmentsResponse.self, from: data)
-                    self?.appointments = result.appointments
+                    // İptal edilen randevuları filtrele
+                    self?.appointments = result.appointments.filter { $0.status != "cancelled" }
                 } catch {
                     self?.errorMessage = "JSON decode hatası: \(error)"
                 }
@@ -77,8 +78,22 @@ class AppointmentListViewModel: ObservableObject {
                     return
                 }
 
-                // Başarılıysa listeyi güncelle
-                self?.fetchAppointments()
+                // HTTP yanıt kodunu kontrol et
+                if let httpResponse = response as? HTTPURLResponse,
+                   httpResponse.statusCode >= 200 && httpResponse.statusCode < 300 {
+                    // Başarılıysa: anında listeden kaldır (kullanıcı experience için)
+                    self?.appointments.removeAll { $0.id == appointment.id }
+                    
+                    // Başarı mesajı temizle
+                    self?.errorMessage = nil
+                    
+                    // Arka planda listeyi yenile (senkronizasyon için)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        self?.fetchAppointments()
+                    }
+                } else {
+                    self?.errorMessage = "Randevu iptal edilemedi"
+                }
             }
         }.resume()
     }

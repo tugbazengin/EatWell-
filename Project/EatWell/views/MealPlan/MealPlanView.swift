@@ -61,6 +61,28 @@ struct MealPlanView: View {
                     .padding(.horizontal)
                 }
                 
+                // Save Success Toast
+                if viewModel.showSaveSuccess {
+                    HStack {
+                        Image(systemName: "checkmark.circle.fill")
+                        Text("Beslenme planınız başarıyla kaydedildi!")
+                        Spacer()
+                    }
+                    .foregroundColor(.white)
+                    .padding()
+                    .background(
+                        LinearGradient(
+                            colors: [Color.green.opacity(0.8), Color.green],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .cornerRadius(12)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .animation(.spring(), value: viewModel.showSaveSuccess)
+                    .padding(.horizontal)
+                }
+                
                 // Loading indicator
                 if viewModel.isLoading {
                     VStack(spacing: 10) {
@@ -111,13 +133,31 @@ struct MealPlanView: View {
                 
                 Spacer()
                 
-                Button("Temizle") {
-                    viewModel.clearMealPlan()
+                HStack(spacing: 12) {
+                    // Kaydet Butonu
+                    Button(action: {
+                        viewModel.saveMealPlan()
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: viewModel.isSaved ? "checkmark.circle.fill" : "square.and.arrow.down")
+                            Text(viewModel.isSaved ? "Kaydedildi" : "Kaydet")
+                        }
+                        .font(.appCaption)
+                        .foregroundColor(viewModel.isSaved ? .green : .appPrimary)
+                    }
+                    .opacity(viewModel.dailyNutrition.calories > 0 ? 1 : 0.3)
+                    .disabled(viewModel.dailyNutrition.calories == 0)
+                    
+                    // Temizle Butonu
+                    Button("Temizle") {
+                        viewModel.clearMealPlan()
+                        viewModel.deleteSavedMealPlan()
+                    }
+                    .font(.appCaption)
+                    .foregroundColor(.red)
+                    .opacity(viewModel.dailyNutrition.calories > 0 ? 1 : 0.3)
+                    .disabled(viewModel.dailyNutrition.calories == 0)
                 }
-                .font(.appCaption)
-                .foregroundColor(.red)
-                .opacity(viewModel.dailyNutrition.calories > 0 ? 1 : 0.3)
-                .disabled(viewModel.dailyNutrition.calories == 0)
             }
             
             HStack(spacing: 20) {
