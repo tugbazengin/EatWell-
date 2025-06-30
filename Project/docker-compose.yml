@@ -1,0 +1,39 @@
+services:
+  # MongoDB servisi
+  mongodb:
+    image: mongo:7.0
+    container_name: eatwell-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: eatwell
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - eatwell-network
+
+  # Backend servisi
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: eatwell-backend
+    restart: unless-stopped
+    ports:
+      - "5002:5002"
+    env_file:
+      - ./.env.production
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - eatwell-network
+    command: npm start
+
+volumes:
+  mongodb_data:
+
+networks:
+  eatwell-network:
+    driver: bridge 
