@@ -11,7 +11,6 @@ class ProfileViewModel: ObservableObject {
     @Published var profile: UserProfile
     @Published var isEditing: Bool
     @Published var showDeleteConfirmation: Bool
-    @Published var showLogoutConfirmation: Bool = false
     @Published var navigateToAuth: Bool
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
@@ -167,8 +166,21 @@ class ProfileViewModel: ObservableObject {
 
     func deleteProfile() {
         print("🗑️ Hesap silme işlemi başlatılıyor...")
-        guard let url = URL(string: "\(baseURL)/delete-account") else {
-            errorMessage = "Geçersiz sunucu adresi"
+        
+        // Loading state'i başlat
+        isLoading = true
+        errorMessage = nil
+        
+        // URL kontrolü
+        let deleteURL = "\(baseURL)/delete-account"
+        print("🌐 Delete URL: \(deleteURL)")
+        
+        guard let url = URL(string: deleteURL) else {
+            print("❌ Geçersiz URL: \(deleteURL)")
+            DispatchQueue.main.async {
+                self.isLoading = false
+                self.errorMessage = "Geçersiz sunucu adresi"
+            }
             return
         }
         
@@ -176,34 +188,75 @@ class ProfileViewModel: ObservableObject {
         request.httpMethod = "DELETE"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        if let token = UserDefaults.standard.string(forKey: "user_token") {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        // Token kontrolü
+        guard let token = UserDefaults.standard.string(forKey: "user_token") else {
+            print("❌ Token bulunamadı!")
+            DispatchQueue.main.async {
+                self.isLoading = false
+                self.errorMessage = "Oturum süresi dolmuş. Lütfen tekrar giriş yapın."
+            }
+            return
         }
+        
+        print("🔑 Token mevcut, uzunluk: \(token.count)")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
+        print("📤 Delete request gönderiliyor...")
         
         URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
+                self.isLoading = false
+                
                 if let error = error {
-                    print("❌ Hesap silme hatası: \(error.localizedDescription)")
-                    self.errorMessage = "Hesap silinirken bir hata oluştu: \(error.localizedDescription)"
+                    print("❌ Network hatası: \(error.localizedDescription)")
+                    self.errorMessage = "Ağ bağlantı hatası: \(error.localizedDescription)"
                     return
                 }
                 
                 if let httpResponse = response as? HTTPURLResponse {
                     print("📡 HTTP Durum Kodu: \(httpResponse.statusCode)")
+                    
+                    // Response data'sını da kontrol et
+                    if let data = data,
+                       let responseString = String(data: data, encoding: .utf8) {
+                        print("📥 Response: \(responseString)")
+                    }
+                    
                     if httpResponse.statusCode == 200 {
                         print("✅ Hesap başarıyla silindi!")
                         
                         // Kullanıcı verilerini temizle
                         UserDefaults.standard.removeObject(forKey: "user_token")
                         UserDefaults.standard.removeObject(forKey: "isLoggedIn")
+                        UserDefaults.standard.removeObject(forKey: "dailyCalorieLimit")
                         UserDefaults.standard.synchronize()
+                        
+                        print("🔄 Auth ekranına yönlendiriliyor...")
                         
                         // Auth ekranına yönlendir
                         self.navigateToAuth = true
+                        
+                        // Başarı mesajı (opsiyonel)
+                        self.showSuccessMessage = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                            self.showSuccessMessage = false
+                        }
+                        
                     } else {
-                        self.errorMessage = "Hesap silinirken bir hata oluştu (Kod: \(httpResponse.statusCode))"
+                        print("❌ HTTP Hata Kodu: \(httpResponse.statusCode)")
+                        
+                        let errorMsg = "Hesap silinirken bir hata oluştu (Kod: \(httpResponse.statusCode))"
+                        
+                        if httpResponse.statusCode == 401 {
+                            self.errorMessage = "Oturum süresi dolmuş. Lütfen tekrar giriş yapın."
+                        } else if httpResponse.statusCode == 404 {
+                            self.errorMessage = "Kullanıcı bulunamadı."
+                        } else {
+                            self.errorMessage = errorMsg
+                        }
                     }
                 } else {
+                    print("❌ HTTP Response alınamadı")
                     self.errorMessage = "Sunucudan yanıt alınamadı"
                 }
             }

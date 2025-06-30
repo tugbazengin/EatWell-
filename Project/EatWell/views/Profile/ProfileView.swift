@@ -81,6 +81,7 @@ struct ProfileView: View {
                 }
                 .overlay(editButtonOverlay)
                 .overlay(successToastOverlay)
+                .overlay(loadingOverlay)
                 .alert(isPresented: $viewModel.showDeleteConfirmation) {
                     Alert(
                         title: Text("Profil Silinsin Mi?"),
@@ -89,13 +90,17 @@ struct ProfileView: View {
                         secondaryButton: .cancel(Text("Hayır"))
                     )
                 }
-                .alert(isPresented: $viewModel.showLogoutConfirmation) {
-                    Alert(
-                        title: Text("Çıkış Yap"),
-                        message: Text("Çıkış yapmak istediğinize emin misiniz?"),
-                        primaryButton: .default(Text("Evet"), action: viewModel.logout),
-                        secondaryButton: .cancel(Text("Hayır"))
-                    )
+                .alert("Hata", isPresented: Binding<Bool>(
+                    get: { viewModel.errorMessage != nil },
+                    set: { _ in viewModel.errorMessage = nil }
+                )) {
+                    Button("Tamam") {
+                        viewModel.errorMessage = nil
+                    }
+                } message: {
+                    if let errorMessage = viewModel.errorMessage {
+                        Text(errorMessage)
+                    }
                 }
                 .fullScreenCover(isPresented: $viewModel.navigateToAuth) {
                     AuthView()
@@ -108,12 +113,20 @@ struct ProfileView: View {
                         .foregroundColor(.primary)
                 }
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
-                    Button(action: { viewModel.showDeleteConfirmation = true }) {
+                    Button(action: { 
+                        print("🗑️ Çöp kutusu butonuna tıklandı!")
+                        print("📊 Mevcut showDeleteConfirmation: \(viewModel.showDeleteConfirmation)")
+                        viewModel.showDeleteConfirmation = true
+                        print("📊 Yeni showDeleteConfirmation: \(viewModel.showDeleteConfirmation)")
+                    }) {
                         Image(systemName: "trash")
                             .font(.title2)
                             .foregroundColor(.red)
                     }
-                    Button(action: { viewModel.showLogoutConfirmation = true }) {
+                    Button(action: { 
+                        print("🚪 Çıkış butonuna tıklandı - direkt logout!")
+                        viewModel.logout()
+                    }) {
                         Image(systemName: "rectangle.portrait.and.arrow.forward")
                             .font(.title2)
                             .foregroundColor(.blue)
@@ -356,5 +369,34 @@ struct ProfileView: View {
             Spacer()
         }
         .padding(.top, 60)
+    }
+    
+    // MARK: - Loading Overlay
+    private var loadingOverlay: some View {
+        Group {
+            if viewModel.isLoading {
+                ZStack {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                    
+                    VStack(spacing: 20) {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(1.5)
+                        
+                        Text("İşlem gerçekleştiriliyor...")
+                            .font(.appBody)
+                            .foregroundColor(.white)
+                    }
+                    .padding(30)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.black.opacity(0.8))
+                    )
+                }
+                .transition(.opacity)
+                .animation(.easeInOut, value: viewModel.isLoading)
+            }
+        }
     }
 }
